@@ -3603,7 +3603,7 @@
             <div class="dashboard-controls">
                 <div class="control-row">
                     <input type="text" id="search-player" class="control-input" placeholder="Search Players">
-                    <button class="control-btn" onclick="refreshPlayersList()">Refresh</button>
+                    <button class="control-btn" onclick="deleteAllUsernames()">Delete All Usernames</button>
                 </div>
                 <div class="control-row player-sort-row">
                     <button class="control-btn secondary player-sort-btn" id="sort-btn-cycle" onclick="cyclePlayerSort()">Sort: Win Rate</button>
@@ -4334,6 +4334,12 @@
         if (!confirm('Are you sure you want to delete all leaderboard entries?')) return;
         const leaderboardRef = window.firebaseRef(window.firebaseDB, 'leaderboard');
         await window.firebaseRemove(leaderboardRef);
+    }
+
+    async function deleteAllUsernames() {
+        if (!confirm('Are you sure you want to delete all usernames?')) return;
+        const usernamesRef = window.firebaseRef(window.firebaseDB, 'usernames');
+        await window.firebaseRemove(usernamesRef);
     }
 
     function editLeaderboardEntry(id) {
@@ -6788,6 +6794,7 @@
     window.switchTab = switchTab;
     window.addLeaderboardEntry = addLeaderboardEntry;
     window.deleteAllLeaderboard = deleteAllLeaderboard;
+    window.deleteAllUsernames = deleteAllUsernames;
     window.editLeaderboardEntry = editLeaderboardEntry;
     window.closeEditLeaderboard = closeEditLeaderboard;
     window.saveLeaderboardEdit = saveLeaderboardEdit;
