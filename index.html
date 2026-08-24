@@ -4051,6 +4051,11 @@
         window.firebaseUpdate(myPresenceRef, { inGame: inGame });
     }
 
+    function setPresenceUsername(username) {
+        if (!myPresenceRef) return;
+        window.firebaseUpdate(myPresenceRef, { username: username || 'Guest' });
+    }
+
     function openOnlinePlayersModal() {
         const bodyEl = document.getElementById('online-players-body');
         if (onlinePresenceList.length === 0) {
@@ -4128,6 +4133,7 @@
         player1Username = newUsername;
         document.getElementById('profile-avatar').textContent = (player1Username || '?').trim().slice(0, 2);
         localStorage.setItem('dg_localUsername', newUsername);
+        setPresenceUsername(player1Username);
         toastEl.textContent = 'SAVED';
         toastEl.classList.add('show');
         setTimeout(() => {
@@ -6676,6 +6682,7 @@
         currentRoomId = savedRoomId;
         myPlayerNumber = savedPlayerNum;
         player1Username = savedUsername;
+        setPresenceUsername(player1Username);
         isHost = savedPlayerNum === 1;
 
         opponentUsername = savedPlayerNum === 1
