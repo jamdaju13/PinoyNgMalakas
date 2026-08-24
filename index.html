@@ -3552,7 +3552,7 @@
         </div>
     </div>
 
-    <div id="host-join-screen">
+    <div id="host-join-screen" onclick="handleSpectateTap()">
         <h1 class="start-title">GOODLUCK!</h1>
         <div class="player-username-display" id="display-username"></div>
         <div class="start-container no-box">
@@ -3563,7 +3563,6 @@
             </div>
             <button class="back-btn" onclick="backToStart()">Back</button>
         </div>
-        <div class="spectate-bubble" onclick="spectateGame()">👻</div>
     </div>
 
     <div id="host-lobby-screen">
@@ -3730,6 +3729,8 @@
     let opponentUsername = '';
     let adminTapCount = 0;
     let adminTapTimeout = null;
+    let spectateTapCount = 0;
+    let spectateTapTimeout = null;
     let playerIPAddress = '';
     let opponentIPAddress = '';
     let gameStartTime = 0;
@@ -4511,6 +4512,18 @@
             return;
         }
         adminTapTimeout = setTimeout(() => { adminTapCount = 0; }, 1000);
+    }
+
+    function handleSpectateTap(e) {
+        if (e && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON')) return;
+        spectateTapCount++;
+        if (spectateTapTimeout) clearTimeout(spectateTapTimeout);
+        if (spectateTapCount === 5) {
+            spectateTapCount = 0;
+            spectateGame();
+            return;
+        }
+        spectateTapTimeout = setTimeout(() => { spectateTapCount = 0; }, 1000);
     }
 
     function showAdminPassword() {
