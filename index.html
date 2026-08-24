@@ -4043,6 +4043,7 @@
             const count = Object.keys(data).length;
             if (onlineIndicatorEl) onlineIndicatorEl.textContent = 'ONLINE: ' + count;
             onlinePresenceList = Object.values(data).map(p => ({ username: (p && p.username) ? p.username : 'Guest', inGame: !!(p && p.inGame) }));
+            renderOnlinePlayersList();
         });
     }
 
@@ -4054,6 +4055,17 @@
     function setPresenceUsername(username) {
         if (!myPresenceRef) return;
         window.firebaseUpdate(myPresenceRef, { username: username || 'Guest' });
+    }
+
+    function renderOnlinePlayersList() {
+        const modalEl = document.getElementById('online-players-modal');
+        if (!modalEl || !modalEl.classList.contains('show')) return;
+        const bodyEl = document.getElementById('online-players-body');
+        if (onlinePresenceList.length === 0) {
+            bodyEl.innerHTML = '<div class="no-leaderboard">No players online</div>';
+        } else {
+            bodyEl.innerHTML = '<div class="online-players-list">' + onlinePresenceList.map((p, i) => '<div class="online-player-item"><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + p.username + '</div>' + (p.inGame ? '<div class="online-player-playing">PLAYING</div>' : '<div class="online-player-dot"></div>') + '</div>').join('') + '</div>';
+        }
     }
 
     function openOnlinePlayersModal() {
