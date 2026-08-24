@@ -4047,6 +4047,27 @@
         });
     }
 
+    // ── USERNAME RESET LISTENER: when the admin clicks "Delete All Usernames",
+    // every connected client is notified live and has its own saved username
+    // cleared, forcing it to be entered again. ──
+    let initialUsernameResetSignal;
+    function listenForUsernameReset() {
+        const resetRef = window.firebaseRef(window.firebaseDB, 'usernameResetSignal');
+        window.firebaseOnValue(resetRef, (snapshot) => {
+            const value = snapshot.exists() ? snapshot.val() : null;
+            if (initialUsernameResetSignal === undefined) {
+                initialUsernameResetSignal = value;
+                return;
+            }
+            if (value !== initialUsernameResetSignal) {
+                initialUsernameResetSignal = value;
+                localStorage.removeItem('dg_localUsername');
+                localStorage.removeItem('dg_username');
+                window.location.reload();
+            }
+        });
+    }
+
     function setPresenceInGame(inGame) {
         if (!myPresenceRef) return;
         window.firebaseUpdate(myPresenceRef, { inGame: inGame });
@@ -4340,6 +4361,7 @@
         if (!confirm('Are you sure you want to delete all usernames?')) return;
         const usernamesRef = window.firebaseRef(window.firebaseDB, 'usernames');
         await window.firebaseRemove(usernamesRef);
+        await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'usernameResetSignal'), Date.now());
     }
 
     function editLeaderboardEntry(id) {
@@ -6781,6 +6803,7 @@
     // Run reconnection check on page load
     window.addEventListener('load', async () => {
         initOnlinePresence();
+        listenForUsernameReset();
         await ipPromise;
         const reconnected = await tryReconnect();
         // If not reconnected, normal flow continues (start screen already visible)
