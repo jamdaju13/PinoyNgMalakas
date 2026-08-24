@@ -180,6 +180,47 @@
         margin: 0 auto;
     }
 
+    #start-screen .continue-btn.start-play-circle {
+        width: 64px;
+        height: 64px;
+        padding: 0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        letter-spacing: 0;
+        text-transform: none;
+        overflow: visible;
+    }
+
+    #start-screen .continue-btn.start-play-circle::before {
+        display: none;
+    }
+
+    #start-screen .continue-btn.start-play-circle::after {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border-radius: 50%;
+        padding: 4px;
+        background: conic-gradient(from 0deg, transparent 0%, #ffffff 20%, transparent 40%);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        animation: startPlayCircleSpin 2.2s linear infinite;
+        pointer-events: none;
+    }
+
+    @keyframes startPlayCircleSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
     .spectate-bubble {
         margin-top: 40px;
         background: rgba(26, 26, 26, 0.9);
@@ -678,6 +719,7 @@
         font-size: 13px;
         font-weight: 600;
         color: #ffffff;
+        cursor: pointer;
     }
 
     /* ── PLAYER PROFILE BUBBLE: shown above the left side of the second
@@ -2383,6 +2425,38 @@
         border-radius: 10px;
     }
 
+    #online-players-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2600;
+        padding: 20px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    #online-players-modal.show {
+        display: flex;
+        animation: fadeIn 0.3s ease forwards;
+    }
+
+    .online-player-item {
+        background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin: 0 24px 12px;
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
     /* ── PODIUM (Top 3) ── */
     .lb-podium {
         display: flex;
@@ -3339,10 +3413,10 @@
 <body>
 
     <div id="start-screen" onclick="handleAdminTap()">
-        <div id="online-indicator">ONLINE: 0</div>
+        <div id="online-indicator" onclick="openOnlinePlayersModal()">ONLINE: 0</div>
         <h1 class="start-title" id="admin-tap-trigger">DAMA KINGS</h1>
         <div class="start-container no-box">
-            <button class="continue-btn" onclick="startGame()">Continue</button>
+            <button class="continue-btn start-play-circle" onclick="startGame()">▷</button>
         </div>
     </div>
 
@@ -3551,6 +3625,18 @@
         </div>
     </div>
 
+    <div id="online-players-modal">
+        <div class="leaderboard-modal-content">
+            <div class="leaderboard-modal-header">
+                <div class="leaderboard-modal-title">Online Players</div>
+                <button class="close-modal-btn" onclick="closeOnlinePlayersModal()">✖</button>
+            </div>
+            <div class="leaderboard-modal-body" id="online-players-body">
+                <div class="no-leaderboard">No players online</div>
+            </div>
+        </div>
+    </div>
+
     <div id="host-join-screen" onclick="handleSpectateTap()">
         <h1 class="start-title">GOODLUCK!</h1>
         <div class="player-username-display" id="display-username"></div>
@@ -3715,6 +3801,7 @@
     let multiJumpingPiece = null;
     let squaresDOM = [];
     let player1Username = '';
+    let onlinePresenceList = [];
     let currentRoomId = null;
     let isHost = false;
     let myPlayerNumber = null;
@@ -3895,13 +3982,29 @@
     function initOnlinePresence() {
         const presenceRef = window.firebaseRef(window.firebaseDB, 'presence');
         const myPresenceRef = window.firebasePush(presenceRef);
-        window.firebaseSet(myPresenceRef, true);
+        window.firebaseSet(myPresenceRef, { username: player1Username || 'Guest' });
         window.firebaseOnDisconnect(myPresenceRef).remove();
 
         window.firebaseOnValue(presenceRef, (snapshot) => {
-            const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+            const data = snapshot.exists() ? snapshot.val() : {};
+            const count = Object.keys(data).length;
             if (onlineIndicatorEl) onlineIndicatorEl.textContent = 'ONLINE: ' + count;
+            onlinePresenceList = Object.values(data).map(p => (p && p.username) ? p.username : 'Guest');
         });
+    }
+
+    function openOnlinePlayersModal() {
+        const bodyEl = document.getElementById('online-players-body');
+        if (onlinePresenceList.length === 0) {
+            bodyEl.innerHTML = '<div class="no-leaderboard">No players online</div>';
+        } else {
+            bodyEl.innerHTML = onlinePresenceList.map(name => '<div class="online-player-item">' + name + '</div>').join('');
+        }
+        document.getElementById('online-players-modal').classList.add('show');
+    }
+
+    function closeOnlinePlayersModal() {
+        document.getElementById('online-players-modal').classList.remove('show');
     }
 
     function updateSpectatorTurnIndicator() {
@@ -3945,10 +4048,29 @@
     async function saveProfileUsername() {
         const newUsername = document.getElementById('profile-username').value.trim();
         if (!newUsername) return;
+        const toastEl = document.getElementById('profile-toast');
+        if (newUsername.toLowerCase() !== (player1Username || '').toLowerCase()) {
+            const usernameKey = newUsername.toLowerCase().replace(/[.#$\[\]]/g, '_');
+            const usernameRef = window.firebaseRef(window.firebaseDB, 'usernames/' + usernameKey);
+            const usernameSnap = await window.firebaseGet(usernameRef);
+            if (usernameSnap.exists()) {
+                toastEl.textContent = 'USERNAME TAKEN';
+                toastEl.classList.add('show');
+                setTimeout(() => {
+                    toastEl.classList.remove('show');
+                }, 1500);
+                return;
+            }
+            if (player1Username) {
+                const oldKey = player1Username.toLowerCase().replace(/[.#$\[\]]/g, '_');
+                window.firebaseRemove(window.firebaseRef(window.firebaseDB, 'usernames/' + oldKey));
+            }
+            await window.firebaseSet(usernameRef, true);
+        }
         player1Username = newUsername;
         document.getElementById('profile-avatar').textContent = (player1Username || '?').trim().slice(0, 2);
         localStorage.setItem('dg_localUsername', newUsername);
-        const toastEl = document.getElementById('profile-toast');
+        toastEl.textContent = 'SAVED';
         toastEl.classList.add('show');
         setTimeout(() => {
             toastEl.classList.remove('show');
@@ -5537,6 +5659,7 @@
         const actionBubbles = document.querySelectorAll('#action-container .action-bubble');
         if (actionBubbles[1]) actionBubbles[1].style.display = isVsAI ? 'none' : 'flex';
         if (actionBubbles[2]) actionBubbles[2].style.display = isVsAI ? 'none' : 'flex';
+        if (actionBubbles[0]) actionBubbles[0].style.marginLeft = isVsAI ? 'auto' : '';
 
         // Store game start time in Firebase for reconnection sync
         if (currentRoomId) {
@@ -6581,6 +6704,8 @@
     window.spectateGame = spectateGame;
     window.openLeaderboard = openLeaderboard;
     window.closeLeaderboardModal = closeLeaderboardModal;
+    window.openOnlinePlayersModal = openOnlinePlayersModal;
+    window.closeOnlinePlayersModal = closeOnlinePlayersModal;
     window.switchTab = switchTab;
     window.addLeaderboardEntry = addLeaderboardEntry;
     window.deleteAllLeaderboard = deleteAllLeaderboard;
