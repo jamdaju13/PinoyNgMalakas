@@ -2451,10 +2451,54 @@
         border: 1px solid #2a2a2a;
         border-radius: 12px;
         padding: 14px 18px;
-        margin: 0 24px 12px;
         color: #ffffff;
         font-size: 15px;
         font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .online-player-item:active {
+        transform: scale(0.98);
+    }
+
+    .online-players-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 20px 24px 4px;
+    }
+
+    .online-player-index {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #795548 0%, #4E342E 100%);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .online-player-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .online-player-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4CAF50;
+        box-shadow: 0 0 8px rgba(76, 175, 80, 0.7);
+        flex-shrink: 0;
     }
 
     /* ── PODIUM (Top 3) ── */
@@ -3998,7 +4042,7 @@
         if (onlinePresenceList.length === 0) {
             bodyEl.innerHTML = '<div class="no-leaderboard">No players online</div>';
         } else {
-            bodyEl.innerHTML = onlinePresenceList.map(name => '<div class="online-player-item">' + name + '</div>').join('');
+            bodyEl.innerHTML = '<div class="online-players-list">' + onlinePresenceList.map((name, i) => '<div class="online-player-item"><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + name + '</div><div class="online-player-dot"></div></div>').join('') + '</div>';
         }
         document.getElementById('online-players-modal').classList.add('show');
     }
