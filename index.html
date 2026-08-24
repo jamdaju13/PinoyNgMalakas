@@ -733,6 +733,30 @@
         display: flex;
     }
 
+    .profile-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(26, 26, 26, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 12px 20px;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        z-index: 2100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .profile-toast.show {
+        opacity: 1;
+    }
+
     /* ── PLAYER PROFILE CARD: organizes the profile page into clearly
        separated sections — avatar/title header, username, stats,
        change password, and actions — each divided so the page reads
@@ -3325,6 +3349,7 @@
     <div class="profile-bubble" onclick="openProfile()">👤</div>
 
     <div id="profile-screen">
+        <div id="profile-toast" class="profile-toast">SAVED</div>
         <div class="profile-card">
             <div class="profile-card-header">
                 <div class="profile-avatar" id="profile-avatar">?</div>
@@ -3923,6 +3948,11 @@
         player1Username = newUsername;
         document.getElementById('profile-avatar').textContent = (player1Username || '?').trim().slice(0, 2);
         localStorage.setItem('dg_localUsername', newUsername);
+        const toastEl = document.getElementById('profile-toast');
+        toastEl.classList.add('show');
+        setTimeout(() => {
+            toastEl.classList.remove('show');
+        }, 1000);
     }
 
     // ── OPTIMIZATION: cache TTL-based leaderboard, skip fetch if fresh ──
@@ -4149,8 +4179,14 @@
         const name = game.winnerUsername;
         if (!name) return;
         if (!confirm('Add "' + name + '" to the leaderboard?')) return;
-        const leaderboardRef = window.firebaseRef(window.firebaseDB, 'leaderboard');
-        await window.firebasePush(leaderboardRef, { name, score: 1, timestamp: Date.now() });
+        const existingEntry = allLeaderboardData.find(e => e.name === name);
+        if (existingEntry) {
+            const entryRef = window.firebaseRef(window.firebaseDB, 'leaderboard/' + existingEntry.id);
+            await window.firebaseUpdate(entryRef, { score: existingEntry.score + 1 });
+        } else {
+            const leaderboardRef = window.firebaseRef(window.firebaseDB, 'leaderboard');
+            await window.firebasePush(leaderboardRef, { name, score: 1, timestamp: Date.now() });
+        }
         alert('Added to leaderboard.');
     }
 
