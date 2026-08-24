@@ -2501,6 +2501,14 @@
         flex-shrink: 0;
     }
 
+    .online-player-playing {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #FFD700;
+        flex-shrink: 0;
+    }
+
     /* ── PODIUM (Top 3) ── */
     .lb-podium {
         display: flex;
@@ -3846,6 +3854,7 @@
     let squaresDOM = [];
     let player1Username = '';
     let onlinePresenceList = [];
+    let myPresenceRef = null;
     let currentRoomId = null;
     let isHost = false;
     let myPlayerNumber = null;
@@ -4025,16 +4034,21 @@
     // and keeps a live count of connected clients displayed on the main screen ──
     function initOnlinePresence() {
         const presenceRef = window.firebaseRef(window.firebaseDB, 'presence');
-        const myPresenceRef = window.firebasePush(presenceRef);
-        window.firebaseSet(myPresenceRef, { username: player1Username || 'Guest' });
+        myPresenceRef = window.firebasePush(presenceRef);
+        window.firebaseSet(myPresenceRef, { username: player1Username || 'Guest', inGame: false });
         window.firebaseOnDisconnect(myPresenceRef).remove();
 
         window.firebaseOnValue(presenceRef, (snapshot) => {
             const data = snapshot.exists() ? snapshot.val() : {};
             const count = Object.keys(data).length;
             if (onlineIndicatorEl) onlineIndicatorEl.textContent = 'ONLINE: ' + count;
-            onlinePresenceList = Object.values(data).map(p => (p && p.username) ? p.username : 'Guest');
+            onlinePresenceList = Object.values(data).map(p => ({ username: (p && p.username) ? p.username : 'Guest', inGame: !!(p && p.inGame) }));
         });
+    }
+
+    function setPresenceInGame(inGame) {
+        if (!myPresenceRef) return;
+        window.firebaseUpdate(myPresenceRef, { inGame: inGame });
     }
 
     function openOnlinePlayersModal() {
@@ -4042,7 +4056,7 @@
         if (onlinePresenceList.length === 0) {
             bodyEl.innerHTML = '<div class="no-leaderboard">No players online</div>';
         } else {
-            bodyEl.innerHTML = '<div class="online-players-list">' + onlinePresenceList.map((name, i) => '<div class="online-player-item"><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + name + '</div><div class="online-player-dot"></div></div>').join('') + '</div>';
+            bodyEl.innerHTML = '<div class="online-players-list">' + onlinePresenceList.map((p, i) => '<div class="online-player-item"><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + p.username + '</div>' + (p.inGame ? '<div class="online-player-playing">PLAYING</div>' : '<div class="online-player-dot"></div>') + '</div>').join('') + '</div>';
         }
         document.getElementById('online-players-modal').classList.add('show');
     }
@@ -5004,6 +5018,7 @@
     async function endMatch(winnerUsername, loserUsername, reason, winnerIP, loserIP, isDraw, winningPlayerNumber) {
         if (gameEnded) return;
         gameEnded = true;
+        setPresenceInGame(false);
         stopInactivityTimer();
         currentInactivityEndTime = null;
         clearInactivityEndTime();
@@ -5682,6 +5697,7 @@
         hasGameStarted = true;
         gameEnded = false;
         gameStartTime = Date.now();
+        setPresenceInGame(true);
         document.getElementById('host-lobby-screen').classList.remove('show');
         document.getElementById('join-lobby-screen').classList.remove('show');
         if (myPlayerNumber === 2) {
