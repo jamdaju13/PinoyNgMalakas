@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Daju13</title>
 <link rel="icon" type="image/png" sizes="180x180" href="images/daju.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
     :root {
         --bg-color: #000000;
@@ -13,15 +16,30 @@
         --pc-black: #1A1A1A;
         --pc-white: #9E9E9E;
         --text-color: #FFFFFF;
+        /* ── Added design-system tokens: shared accent, surface, shadow,
+           radius and easing values used to keep buttons, panels, and
+           transitions feeling consistent across the app. These are purely
+           additive — the four original variables above are untouched and
+           still used exactly as before. ── */
+        --accent: #795548;
+        --accent-dark: #4E342E;
+        --accent-light: #A1887F;
+        --surface: rgba(24, 22, 20, 0.92);
+        --surface-border: rgba(255, 255, 255, 0.08);
+        --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.45);
+        --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.55);
+        --radius-md: 12px;
+        --radius-lg: 20px;
+        --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     body {
         margin: 0;
-        background-color: var(--bg-color);
+        background: radial-gradient(ellipse at 50% 35%, #171512 0%, var(--bg-color) 72%);
         color: var(--text-color);
-        font-family: "Times New Roman", Times, serif;
+        font-family: 'Poppins', "Times New Roman", Times, serif;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -30,6 +48,24 @@
         overflow: hidden;
         user-select: none;
         -webkit-user-select: none;
+    }
+
+    /* ── Polished, unobtrusive scrollbar for any scrollable panel (chat,
+       player lists, history, etc.) — purely cosmetic, no structural or
+       functional change to the elements it applies to. ── */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.28);
     }
 
     #start-screen {
@@ -113,7 +149,7 @@
         font-size: 16px;
         font-family: inherit;
         outline: none;
-        transition: all 0.3s ease;
+        transition: all 0.3s var(--ease-smooth);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         margin-bottom: 32px;
         text-align: center;
@@ -142,7 +178,7 @@
         text-transform: uppercase;
         letter-spacing: 2px;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.3s var(--ease-smooth);
         box-shadow: 0 8px 20px rgba(121, 85, 72, 0.3);
         position: relative;
         overflow: hidden;
@@ -719,7 +755,6 @@
         font-size: 13px;
         font-weight: 600;
         color: #ffffff;
-        cursor: pointer;
     }
 
     /* ── PLAYER PROFILE BUBBLE: shown above the left side of the second
@@ -916,7 +951,7 @@
         color: #ffffff;
         text-align: center;
         margin-bottom: 8px;
-        font-family: "Times New Roman", Times, serif;
+        font-family: inherit;
     }
 
     .spectator-player-name {
@@ -1414,6 +1449,53 @@
     }
 
     .cancel-rematch-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(211, 47, 47, 0.5);
+        border-color: #f44336;
+    }
+
+    #challenge-waiting-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.95);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 2100;
+        backdrop-filter: blur(10px);
+    }
+
+    #challenge-waiting-overlay.show {
+        display: flex;
+    }
+
+    .challenge-waiting-text {
+        font-size: 18px;
+        font-weight: 500;
+        letter-spacing: 3px;
+        color: #b0b0b0;
+        text-transform: uppercase;
+        margin-bottom: 30px;
+    }
+
+    .cancel-challenge-btn {
+        padding: 14px 40px;
+        background: linear-gradient(135deg, #424242 0%, #1a1a1a 100%);
+        color: #ffffff;
+        border: 2px solid #d32f2f;
+        border-radius: 50px;
+        font-size: 14px;
+        font-family: inherit;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(211, 47, 47, 0.3);
+    }
+
+    .cancel-challenge-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 12px 28px rgba(211, 47, 47, 0.5);
         border-color: #f44336;
@@ -2458,6 +2540,7 @@
         align-items: center;
         gap: 14px;
         transition: all 0.3s ease;
+        cursor: pointer;
     }
 
     .online-player-item:active {
@@ -2507,6 +2590,73 @@
         letter-spacing: 1px;
         color: #FFD700;
         flex-shrink: 0;
+    }
+
+    .online-player-unavailable {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #9E9E9E;
+        flex-shrink: 0;
+    }
+
+    #challenge-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: #000000;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 3000;
+        padding: 20px;
+        text-align: center;
+    }
+
+    #challenge-overlay h1 {
+        font-size: 24px;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        font-weight: 300;
+        margin-bottom: 32px;
+    }
+
+    .challenge-buttons {
+        display: flex;
+        gap: 20px;
+    }
+
+    .challenge-buttons button {
+        border: none;
+        padding: 14px 40px;
+        font-size: 14px;
+        font-family: inherit;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-radius: 999px;
+    }
+
+    .challenge-yes-btn {
+        background: linear-gradient(135deg, #795548 0%, #4E342E 100%);
+        color: #ffffff;
+    }
+
+    .challenge-no-btn {
+        background: transparent;
+        color: #ffffff;
+        border: 1px solid #ffffff !important;
+    }
+
+    .challenge-yes-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .challenge-no-btn:hover {
+        background: #ffffff;
+        color: #000000;
     }
 
     /* ── PODIUM (Top 3) ── */
@@ -3689,6 +3839,14 @@
         </div>
     </div>
 
+    <div id="challenge-overlay">
+        <h1 id="challenge-from-name">Someone challenges you!</h1>
+        <div class="challenge-buttons">
+            <button class="challenge-yes-btn" onclick="acceptChallenge()">Yes</button>
+            <button class="challenge-no-btn" onclick="declineChallenge()">No</button>
+        </div>
+    </div>
+
     <div id="host-join-screen" onclick="handleSpectateTap()">
         <h1 class="start-title">GOODLUCK!</h1>
         <div class="player-username-display" id="display-username"></div>
@@ -3786,6 +3944,12 @@
             <div class="rematch-waiting-text">Waiting for opponent...</div>
             <button class="cancel-rematch-btn" onclick="cancelRematchRequest()">Cancel</button>
         </div>
+    </div>
+
+    <!-- Challenge waiting overlay: shown to the player who sent a challenge from the Online Players layer, on top of the first page -->
+    <div id="challenge-waiting-overlay">
+        <div class="challenge-waiting-text">Waiting...</div>
+        <button class="cancel-challenge-btn" onclick="cancelChallengeRequest()">Cancel</button>
     </div>
 
     <div id="winner-screen">
@@ -4035,16 +4199,180 @@
     function initOnlinePresence() {
         const presenceRef = window.firebaseRef(window.firebaseDB, 'presence');
         myPresenceRef = window.firebasePush(presenceRef);
-        window.firebaseSet(myPresenceRef, { username: player1Username || 'Guest', inGame: false });
-        window.firebaseOnDisconnect(myPresenceRef).remove();
+
+        // ── Tie this client's presence entry to Firebase's own live connection
+        // state ('.info/connected') instead of writing it once at load time.
+        // This special location fires true every time this client's socket is
+        // actually connected — including after a dropped/flaky connection
+        // reconnects — so the presence record is (re)written and
+        // onDisconnect().remove() is re-armed on the CURRENT connection each
+        // time. That keeps the Online Players list based on real, current
+        // connection/activity instead of a stale write from a connection that
+        // may no longer be alive. ──
+        const connectedRef = window.firebaseRef(window.firebaseDB, '.info/connected');
+        window.firebaseOnValue(connectedRef, (connSnapshot) => {
+            if (connSnapshot.val() !== true) return;
+            window.firebaseOnDisconnect(myPresenceRef).remove();
+            window.firebaseSet(myPresenceRef, { username: player1Username || 'Guest', inGame: isPlayerCurrentlyInGame, onFirstPage: isOnFirstPage() });
+        });
 
         window.firebaseOnValue(presenceRef, (snapshot) => {
             const data = snapshot.exists() ? snapshot.val() : {};
-            const count = Object.keys(data).length;
-            if (onlineIndicatorEl) onlineIndicatorEl.textContent = 'ONLINE: ' + count;
-            onlinePresenceList = Object.values(data).map(p => ({ username: (p && p.username) ? p.username : 'Guest', inGame: !!(p && p.inGame) }));
+            onlinePresenceList = Object.entries(data).map(([key, p]) => ({ key: key, username: (p && p.username) ? p.username : 'Guest', inGame: !!(p && p.inGame), onFirstPage: (p && p.onFirstPage !== undefined) ? !!p.onFirstPage : true }));
+            // ── Real-time online indicator: this presence listener fires
+            // continuously (via Firebase's live onValue subscription) any
+            // time a player connects or disconnects, so the count shown in
+            // the top-right indicator always reflects who is online right
+            // now, with no manual refresh or polling needed. The current/own
+            // player is excluded from this count. ──
+            const otherPlayersOnline = onlinePresenceList.filter(p => !myPresenceRef || p.key !== myPresenceRef.key);
+            if (onlineIndicatorEl) onlineIndicatorEl.textContent = 'ONLINE: ' + otherPlayersOnline.length;
             renderOnlinePlayersList();
+            // ── Keep the Players tab's online-status filtering in sync in real
+            // time: this presence listener fires continuously (via Firebase's
+            // live onValue subscription) any time a player connects or
+            // disconnects, so refresh the Players list immediately whenever
+            // that happens instead of waiting for a manual refresh. ──
+            refreshPlayersList();
         });
+
+        listenForChallenges();
+        listenForChallengeDeclines();
+    }
+
+    // ── PLAYER CHALLENGES: lets one online player challenge another directly
+    // from the Online Players layer. The challenger hosts a room and writes
+    // a challenge entry keyed by the target's presence id; the target is
+    // notified live and, if accepted, joins that room to play together. ──
+    let incomingChallenge = null;
+    let outgoingChallengeTargetKey = null;
+    // ── Tracks whether this client is currently in an active game (kept in
+    // sync with the same inGame flag written to this player's presence
+    // record). Challenges must only be receivable/acceptable while this is
+    // false, i.e. while the player is on the first page/lobby. ──
+    let isPlayerCurrentlyInGame = false;
+
+    // ── A player can only receive incoming challenges while they are on the
+    // first page/lobby (the #start-screen element, visible whenever it does
+    // not carry the 'hidden' class). Any other screen — profile, host/join
+    // selection, host/join lobby, an active game, spectating, etc. — counts
+    // as "not the first page" for challenge-reception purposes. ──
+    function isOnFirstPage() {
+        const startScreenEl = document.getElementById('start-screen');
+        return !!startScreenEl && !startScreenEl.classList.contains('hidden');
+    }
+
+    // ── Broadcasts this player's current first-page status to their presence
+    // record so other online players see an accurate "Unavailable" status in
+    // the Online Players list whenever this player navigates away from (or
+    // back to) the first page/lobby. ──
+    function broadcastOnFirstPage() {
+        if (!myPresenceRef) return;
+        window.firebaseUpdate(myPresenceRef, { onFirstPage: isOnFirstPage() });
+    }
+
+    function listenForChallenges() {
+        if (!myPresenceRef) return;
+        const challengeRef = window.firebaseRef(window.firebaseDB, 'challenges/' + myPresenceRef.key);
+        window.firebaseOnValue(challengeRef, (snapshot) => {
+            if (!snapshot.exists()) {
+                // ── The challenge entry was removed (e.g. the sender cancelled
+                // it) — immediately clear it for the receiver too, so it can
+                // no longer be accepted or interacted with, and the overlay
+                // (if shown) is dismissed right away. ──
+                incomingChallenge = null;
+                document.getElementById('challenge-overlay').style.display = 'none';
+                return;
+            }
+            const data = snapshot.val();
+            // ── Block incoming challenges entirely while the player is in an
+            // active game, or on any page other than the first page/lobby:
+            // the challenge entry is left untouched in Firebase (so it isn't
+            // lost) but no overlay is shown and it is not accepted while
+            // this client is in-game or off the first page. ──
+            if (isPlayerCurrentlyInGame || !isOnFirstPage()) return;
+            incomingChallenge = { roomId: data.roomId, fromKey: data.fromKey };
+            document.getElementById('challenge-from-name').textContent = (data.fromUsername || 'Someone') + ' challenges you!';
+            document.getElementById('challenge-overlay').style.display = 'flex';
+        });
+    }
+
+    // ── Notifies the challenger automatically when the challenged player
+    // clicks "No", so the challenger's waiting layer is cancelled without
+    // requiring them to click Cancel themselves. ──
+    function listenForChallengeDeclines() {
+        if (!myPresenceRef) return;
+        const declineRef = window.firebaseRef(window.firebaseDB, 'challengeDeclined/' + myPresenceRef.key);
+        window.firebaseOnValue(declineRef, (snapshot) => {
+            if (!snapshot.exists()) return;
+            const data = snapshot.val();
+            if (outgoingChallengeTargetKey && data.roomId === currentRoomId) {
+                window.firebaseRemove(declineRef);
+                cancelChallengeRequest();
+            }
+        });
+    }
+
+    async function challengePlayer(targetKey) {
+        if (!myPresenceRef || targetKey === myPresenceRef.key) return;
+        closeOnlinePlayersModal();
+        outgoingChallengeTargetKey = targetKey;
+        await hostGame(true);
+        document.getElementById('host-join-screen').classList.remove('show');
+        document.getElementById('host-lobby-screen').classList.remove('show');
+        document.getElementById('challenge-waiting-overlay').classList.add('show');
+        await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'challenges/' + targetKey), {
+            fromUsername: player1Username || 'Guest',
+            fromKey: myPresenceRef.key,
+            roomId: currentRoomId,
+            timestamp: Date.now()
+        });
+    }
+
+    async function cancelChallengeRequest() {
+        document.getElementById('challenge-waiting-overlay').classList.remove('show');
+        if (outgoingChallengeTargetKey) {
+            await window.firebaseRemove(window.firebaseRef(window.firebaseDB, 'challenges/' + outgoingChallengeTargetKey));
+            outgoingChallengeTargetKey = null;
+        }
+        await leaveHostLobby();
+        document.getElementById('host-join-screen').classList.remove('show');
+    }
+
+    async function acceptChallenge() {
+        if (!incomingChallenge || isPlayerCurrentlyInGame || !isOnFirstPage()) return;
+        const roomId = incomingChallenge.roomId;
+        document.getElementById('challenge-overlay').style.display = 'none';
+        await window.firebaseRemove(window.firebaseRef(window.firebaseDB, 'challenges/' + myPresenceRef.key));
+        incomingChallenge = null;
+        document.getElementById('start-screen').classList.add('hidden');
+        broadcastOnFirstPage();
+        document.getElementById('room-id-input').value = roomId;
+        isHost = false;
+        myPlayerNumber = 2;
+        await attemptJoinRoom();
+    }
+
+    async function declineChallenge() {
+        if (!incomingChallenge) return;
+        document.getElementById('challenge-overlay').style.display = 'none';
+        // ── Capture these before removing the challenge entry: that removal
+        // triggers this client's own listenForChallenges() listener (it
+        // watches this same 'challenges/<myKey>' path), which immediately
+        // sets incomingChallenge = null. If we read incomingChallenge AFTER
+        // the await below instead, it may already be null by then, throwing
+        // and silently skipping the challengeDeclined write below — which is
+        // what notifies Player A to close their waiting layer. ──
+        const declinedFromKey = incomingChallenge.fromKey;
+        const declinedRoomId = incomingChallenge.roomId;
+        await window.firebaseRemove(window.firebaseRef(window.firebaseDB, 'challenges/' + myPresenceRef.key));
+        if (declinedFromKey) {
+            await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'challengeDeclined/' + declinedFromKey), {
+                roomId: declinedRoomId,
+                timestamp: Date.now()
+            });
+        }
+        incomingChallenge = null;
     }
 
     // ── USERNAME RESET LISTENER: when the admin clicks "Delete All Usernames",
@@ -4069,8 +4397,34 @@
     }
 
     function setPresenceInGame(inGame) {
+        // ── Keep the local in-game flag in sync regardless of whether a
+        // presence ref exists yet, so challenge gating is accurate even if
+        // this fires before presence has been initialized. ──
+        const wasInGame = isPlayerCurrentlyInGame;
+        isPlayerCurrentlyInGame = !!inGame;
+        // ── On returning to the lobby (in-game -> not in-game), surface any
+        // challenge that arrived while incoming challenges were blocked, so
+        // challenges become available again as soon as the player is back
+        // on the first page/lobby. ──
+        if (wasInGame && !isPlayerCurrentlyInGame) {
+            checkPendingChallengeOnReturn();
+        }
         if (!myPresenceRef) return;
         window.firebaseUpdate(myPresenceRef, { inGame: inGame });
+    }
+
+    // ── One-time read of this player's challenge node, used only when
+    // returning to the lobby to catch a challenge that was received (and
+    // deliberately withheld) while the player was in an active game. ──
+    async function checkPendingChallengeOnReturn() {
+        if (!myPresenceRef) return;
+        const challengeRef = window.firebaseRef(window.firebaseDB, 'challenges/' + myPresenceRef.key);
+        const snapshot = await window.firebaseGet(challengeRef);
+        if (!snapshot.exists()) return;
+        const data = snapshot.val();
+        incomingChallenge = { roomId: data.roomId, fromKey: data.fromKey };
+        document.getElementById('challenge-from-name').textContent = (data.fromUsername || 'Someone') + ' challenges you!';
+        document.getElementById('challenge-overlay').style.display = 'flex';
     }
 
     function setPresenceUsername(username) {
@@ -4082,19 +4436,21 @@
         const modalEl = document.getElementById('online-players-modal');
         if (!modalEl || !modalEl.classList.contains('show')) return;
         const bodyEl = document.getElementById('online-players-body');
-        if (onlinePresenceList.length === 0) {
+        const otherPlayersOnline = onlinePresenceList.filter(p => !myPresenceRef || p.key !== myPresenceRef.key);
+        if (otherPlayersOnline.length === 0) {
             bodyEl.innerHTML = '<div class="no-leaderboard">No players online</div>';
         } else {
-            bodyEl.innerHTML = '<div class="online-players-list">' + onlinePresenceList.map((p, i) => '<div class="online-player-item"><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + p.username + '</div>' + (p.inGame ? '<div class="online-player-playing">PLAYING</div>' : '<div class="online-player-dot"></div>') + '</div>').join('') + '</div>';
+            bodyEl.innerHTML = '<div class="online-players-list">' + otherPlayersOnline.map((p, i) => '<div class="online-player-item"' + (myPresenceRef && p.key !== myPresenceRef.key && !p.inGame && p.onFirstPage ? ' onclick="challengePlayer(\'' + p.key + '\')"' : '') + '><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + p.username + '</div>' + (p.inGame ? '<div class="online-player-playing">PLAYING</div>' : (!p.onFirstPage ? '<div class="online-player-unavailable">Unavailable</div>' : '<div class="online-player-dot"></div>')) + '</div>').join('') + '</div>';
         }
     }
 
     function openOnlinePlayersModal() {
         const bodyEl = document.getElementById('online-players-body');
-        if (onlinePresenceList.length === 0) {
+        const otherPlayersOnline = onlinePresenceList.filter(p => !myPresenceRef || p.key !== myPresenceRef.key);
+        if (otherPlayersOnline.length === 0) {
             bodyEl.innerHTML = '<div class="no-leaderboard">No players online</div>';
         } else {
-            bodyEl.innerHTML = '<div class="online-players-list">' + onlinePresenceList.map((p, i) => '<div class="online-player-item"><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + p.username + '</div>' + (p.inGame ? '<div class="online-player-playing">PLAYING</div>' : '<div class="online-player-dot"></div>') + '</div>').join('') + '</div>';
+            bodyEl.innerHTML = '<div class="online-players-list">' + otherPlayersOnline.map((p, i) => '<div class="online-player-item"' + (myPresenceRef && p.key !== myPresenceRef.key && !p.inGame && p.onFirstPage ? ' onclick="challengePlayer(\'' + p.key + '\')"' : '') + '><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + p.username + '</div>' + (p.inGame ? '<div class="online-player-playing">PLAYING</div>' : (!p.onFirstPage ? '<div class="online-player-unavailable">Unavailable</div>' : '<div class="online-player-dot"></div>')) + '</div>').join('') + '</div>';
         }
         document.getElementById('online-players-modal').classList.add('show');
     }
@@ -4133,12 +4489,15 @@
         document.getElementById('profile-username').value = player1Username || '';
         document.getElementById('profile-avatar').textContent = (player1Username || '?').trim().slice(0, 2);
         document.getElementById('start-screen').classList.add('hidden');
+        broadcastOnFirstPage();
         document.getElementById('profile-screen').classList.add('show');
     }
 
     function closeProfile() {
         document.getElementById('profile-screen').classList.remove('show');
         document.getElementById('start-screen').classList.remove('hidden');
+        broadcastOnFirstPage();
+        checkPendingChallengeOnReturn();
     }
 
     async function saveProfileUsername() {
@@ -4503,6 +4862,15 @@
         const searchVal = (document.getElementById('search-player').value || '').toLowerCase();
         let players = Object.values(playersMap)
             .filter(p => !searchVal || p.name.toLowerCase().includes(searchVal));
+
+        // ── ONLINE-ONLY FILTER: the Players tab list should only ever show
+        // players who are currently online. onlinePresenceList is kept live
+        // by the real-time Firebase 'presence' listener in initOnlinePresence
+        // (see above), so cross-referencing against it here means this list
+        // always reflects who is online right now — any player who is not
+        // currently connected is excluded/hidden from this list entirely. ──
+        const onlineUsernames = new Set(onlinePresenceList.map(p => p.username));
+        players = players.filter(p => onlineUsernames.has(p.name));
 
         // Apply the active Show Only Winners / Show Only Losers filter before
         // sorting, so the filtered results remain sorted according to the
@@ -5175,6 +5543,7 @@
             if (!spectatorConnected) {
                 spectatorConnected = true;
                 document.getElementById('start-screen').classList.add('hidden');
+                broadcastOnFirstPage();
                 document.getElementById('spectate-modal').classList.remove('show');
                 document.getElementById('spectate-loading-screen').classList.remove('show');
                 document.getElementById('host-join-screen').classList.remove('show');
@@ -5274,12 +5643,15 @@
         }
         document.getElementById('display-username').textContent = player1Username;
         document.getElementById('start-screen').classList.add('hidden');
+        broadcastOnFirstPage();
         document.getElementById('host-join-screen').classList.add('show');
     }
 
     function backToStart() {
         document.getElementById('host-join-screen').classList.remove('show');
         document.getElementById('start-screen').classList.remove('hidden');
+        broadcastOnFirstPage();
+        checkPendingChallengeOnReturn();
     }
 
     // ── PLAY VS EXPERT AI ──
@@ -5446,11 +5818,11 @@
         return Math.random() < 0.5 ? 1 : 2;
     }
 
-    async function hostGame() {
+    async function hostGame(skipLobbyDisplay) {
         // ── OPTIMIZATION: ensure IP is resolved before hosting ──
         await ipPromise;
         document.getElementById('host-join-screen').classList.remove('show');
-        document.getElementById('host-lobby-screen').classList.add('show');
+        if (!skipLobbyDisplay) document.getElementById('host-lobby-screen').classList.add('show');
         isHost = true;
         myPlayerNumber = 1;
 
@@ -5744,6 +6116,10 @@
         gameEnded = false;
         gameStartTime = Date.now();
         setPresenceInGame(true);
+        document.getElementById('start-screen').classList.add('hidden');
+        broadcastOnFirstPage();
+        document.getElementById('challenge-waiting-overlay').classList.remove('show');
+        outgoingChallengeTargetKey = null;
         document.getElementById('host-lobby-screen').classList.remove('show');
         document.getElementById('join-lobby-screen').classList.remove('show');
         if (myPlayerNumber === 2) {
@@ -6755,6 +7131,7 @@
 
         // Hide all screens, show game
         document.getElementById('start-screen').classList.add('hidden');
+        broadcastOnFirstPage();
         document.getElementById('host-join-screen').classList.remove('show');
         document.getElementById('host-lobby-screen').classList.remove('show');
         document.getElementById('join-lobby-screen').classList.remove('show');
@@ -6814,6 +7191,10 @@
     window.closeLeaderboardModal = closeLeaderboardModal;
     window.openOnlinePlayersModal = openOnlinePlayersModal;
     window.closeOnlinePlayersModal = closeOnlinePlayersModal;
+    window.challengePlayer = challengePlayer;
+    window.cancelChallengeRequest = cancelChallengeRequest;
+    window.acceptChallenge = acceptChallenge;
+    window.declineChallenge = declineChallenge;
     window.switchTab = switchTab;
     window.addLeaderboardEntry = addLeaderboardEntry;
     window.deleteAllLeaderboard = deleteAllLeaderboard;
