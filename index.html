@@ -3801,7 +3801,8 @@
                     <button class="control-btn secondary player-sort-btn" id="sort-btn-cycle" onclick="cyclePlayerSort()">Sort: Win Rate</button>
                 </div>
                 <div class="control-row player-filter-row">
-                    <button class="control-btn secondary player-filter-btn" id="filter-btn-cycle" onclick="cyclePlayerFilter()">All Players</button>
+                    <button class="control-btn secondary player-filter-btn" id="filter-btn-winners" onclick="togglePlayerFilter('winners')">Show Only Winners</button>
+                    <button class="control-btn secondary player-filter-btn" id="filter-btn-losers" onclick="togglePlayerFilter('losers')">Show Only Losers</button>
                 </div>
             </div>
             <div class="players-table-wrap">
@@ -4124,7 +4125,6 @@
     let currentInactivityEndTime = null;
     let currentTab = 'history';
     let leaderboardListener = null;
-    let publicLeaderboardListener = null;
     let allLeaderboardData = [];
     let editingLeaderboardId = null;
     let lastMatchReason = '';
@@ -4141,8 +4141,6 @@
     // "Show Only Winners" / "Show Only Losers" buttons; works together with
     // whatever sort mode is currently active.
     let currentPlayerFilter = 'none';
-    const PLAYER_FILTER_CYCLE = ['none', 'winners', 'losers'];
-    const PLAYER_FILTER_LABELS = { none: 'All Players', winners: 'Show Only Winners', losers: 'Show Only Losers' };
     const PLAYER_SORT_CYCLE = ['newest', 'winrate', 'wins', 'losses'];
     const PLAYER_SORT_LABELS = { newest: 'Sort: Newest', winrate: 'Sort: Win Rate', wins: 'Sort: Wins', losses: 'Sort: Losses' };
     // Find a Match: session id used to identify this client while waiting in the
@@ -4605,7 +4603,7 @@
         }, 1000);
     }
 
-    // ── OPTIMIZATION: detach previous listener before attaching a new one to prevent duplicates ──
+    // ── OPTIMIZATION: cache TTL-based leaderboard, skip fetch if fresh ──
     function openLeaderboard() {
         document.getElementById('leaderboard-modal').classList.add('show');
         loadPublicLeaderboard();
@@ -4613,33 +4611,25 @@
 
     function closeLeaderboardModal() {
         document.getElementById('leaderboard-modal').classList.remove('show');
-        if (publicLeaderboardListener) {
-            const leaderboardRef = window.firebaseRef(window.firebaseDB, 'leaderboard');
-            window.firebaseOff(leaderboardRef);
-            publicLeaderboardListener = null;
-        }
     }
 
-    function loadPublicLeaderboard() {
-        // Use cache immediately if fresh, so the podium/list render without
-        // waiting on the network, while the live listener below keeps it
-        // updated automatically for as long as the modal stays open.
+    async function loadPublicLeaderboard() {
         const now = Date.now();
-        if (leaderboardCache && (now - leaderboardCacheTime) < LEADERBOARD_CACHE_TTL) {
+        // Show cached data immediately (even if stale) so the modal never sits empty/flickers,
+        // then quietly refresh in the background if the cache is past its TTL.
+        if (leaderboardCache) {
             renderPublicLeaderboard(leaderboardCache);
+            if ((now - leaderboardCacheTime) < LEADERBOARD_CACHE_TTL) {
+                return;
+            }
         }
 
         const leaderboardRef = window.firebaseRef(window.firebaseDB, 'leaderboard');
-        if (publicLeaderboardListener) {
-            window.firebaseOff(leaderboardRef);
-            publicLeaderboardListener = null;
-        }
-        publicLeaderboardListener = window.firebaseOnValue(leaderboardRef, (snapshot) => {
-            const data = snapshot.exists() ? snapshot.val() : null;
-            leaderboardCache = data;
-            leaderboardCacheTime = Date.now();
-            renderPublicLeaderboard(data);
-        });
+        const snapshot = await window.firebaseGet(leaderboardRef);
+        const data = snapshot.exists() ? snapshot.val() : null;
+        leaderboardCache = data;
+        leaderboardCacheTime = now;
+        renderPublicLeaderboard(data);
     }
 
     // ── PODIUM (Top 3) + RANKED LIST (1–100) RENDER ──
@@ -4968,23 +4958,19 @@
         if (btn) btn.textContent = PLAYER_SORT_LABELS[currentPlayerSort] || 'Sort: Newest';
     }
 
-    // ── Filter control for the Players tab: cycles All Players → Show Only
-    // Winners → Show Only Losers → All Players, repeating, every time the
-    // single filter button is clicked. Works together with whatever sort
+    // ── Filter control for the Players tab: toggles "Show Only Winners" /
+    // "Show Only Losers". Clicking an already-active filter turns it back off
+    // (reverting to showing all players). Works together with whatever sort
     // mode is currently selected — refreshPlayersList() applies the filter
     // and then sorts the filtered results. ──
-    function cyclePlayerFilter() {
-        const idx = PLAYER_FILTER_CYCLE.indexOf(currentPlayerFilter);
-        const nextIdx = (idx + 1) % PLAYER_FILTER_CYCLE.length;
-        currentPlayerFilter = PLAYER_FILTER_CYCLE[nextIdx];
-        updatePlayerFilterButtonLabel();
+    function togglePlayerFilter(type) {
+        currentPlayerFilter = (currentPlayerFilter === type) ? 'none' : type;
+        document.querySelectorAll('.player-filter-btn').forEach(btn => btn.classList.remove('active'));
+        if (currentPlayerFilter !== 'none') {
+            const activeBtn = document.getElementById('filter-btn-' + currentPlayerFilter);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
         refreshPlayersList();
-    }
-
-    function updatePlayerFilterButtonLabel() {
-        const btn = document.getElementById('filter-btn-cycle');
-        if (btn) btn.textContent = PLAYER_FILTER_LABELS[currentPlayerFilter] || 'All Players';
-        if (btn) btn.classList.toggle('active', currentPlayerFilter !== 'none');
     }
 
     // ── PLAYERS TAB: aggregate gameHistory into a per-player stats table ──
@@ -4994,7 +4980,6 @@
         const tbody = document.getElementById('players-table-body');
 
         updatePlayerSortButtonLabel();
-        updatePlayerFilterButtonLabel();
 
         if (!snapshot.exists()) {
             tbody.innerHTML = '<tr><td colspan="1" class="no-games">No players found</td></tr>';
@@ -7396,6 +7381,7 @@
     window.addEventListener('load', async () => {
         initOnlinePresence();
         listenForUsernameReset();
+        loadPublicLeaderboard();
         await ipPromise;
         const reconnected = await tryReconnect();
         // If not reconnected, normal flow continues (start screen already visible)
@@ -7436,7 +7422,7 @@
     window.openPlayerHistory = openPlayerHistory;
     window.closePlayerHistory = closePlayerHistory;
     window.cyclePlayerSort = cyclePlayerSort;
-    window.cyclePlayerFilter = cyclePlayerFilter;
+    window.togglePlayerFilter = togglePlayerFilter;
     window.findMatch = findMatch;
     window.playVsAI = playVsAI;
     window.openProfile = openProfile;
