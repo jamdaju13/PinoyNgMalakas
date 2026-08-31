@@ -4124,6 +4124,7 @@
     let currentInactivityEndTime = null;
     let currentTab = 'history';
     let leaderboardListener = null;
+    let publicLeaderboardListener = null;
     let allLeaderboardData = [];
     let editingLeaderboardId = null;
     let lastMatchReason = '';
@@ -4604,7 +4605,7 @@
         }, 1000);
     }
 
-    // ── OPTIMIZATION: cache TTL-based leaderboard, skip fetch if fresh ──
+    // ── OPTIMIZATION: detach previous listener before attaching a new one to prevent duplicates ──
     function openLeaderboard() {
         document.getElementById('leaderboard-modal').classList.add('show');
         loadPublicLeaderboard();
@@ -4612,22 +4613,33 @@
 
     function closeLeaderboardModal() {
         document.getElementById('leaderboard-modal').classList.remove('show');
+        if (publicLeaderboardListener) {
+            const leaderboardRef = window.firebaseRef(window.firebaseDB, 'leaderboard');
+            window.firebaseOff(leaderboardRef);
+            publicLeaderboardListener = null;
+        }
     }
 
-    async function loadPublicLeaderboard() {
+    function loadPublicLeaderboard() {
+        // Use cache immediately if fresh, so the podium/list render without
+        // waiting on the network, while the live listener below keeps it
+        // updated automatically for as long as the modal stays open.
         const now = Date.now();
-        // Use cache if still fresh
         if (leaderboardCache && (now - leaderboardCacheTime) < LEADERBOARD_CACHE_TTL) {
             renderPublicLeaderboard(leaderboardCache);
-            return;
         }
 
         const leaderboardRef = window.firebaseRef(window.firebaseDB, 'leaderboard');
-        const snapshot = await window.firebaseGet(leaderboardRef);
-        const data = snapshot.exists() ? snapshot.val() : null;
-        leaderboardCache = data;
-        leaderboardCacheTime = now;
-        renderPublicLeaderboard(data);
+        if (publicLeaderboardListener) {
+            window.firebaseOff(leaderboardRef);
+            publicLeaderboardListener = null;
+        }
+        publicLeaderboardListener = window.firebaseOnValue(leaderboardRef, (snapshot) => {
+            const data = snapshot.exists() ? snapshot.val() : null;
+            leaderboardCache = data;
+            leaderboardCacheTime = Date.now();
+            renderPublicLeaderboard(data);
+        });
     }
 
     // ── PODIUM (Top 3) + RANKED LIST (1–100) RENDER ──
