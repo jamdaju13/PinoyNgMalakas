@@ -2629,6 +2629,19 @@
         letter-spacing: 1px;
         color: #FFD700;
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .online-player-spectate-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        cursor: pointer;
+        line-height: 1;
     }
 
     .online-player-unavailable {
@@ -4288,7 +4301,7 @@
 
         window.firebaseOnValue(presenceRef, (snapshot) => {
             const data = snapshot.exists() ? snapshot.val() : {};
-            onlinePresenceList = Object.entries(data).map(([key, p]) => ({ key: key, username: (p && p.username) ? p.username : 'Guest', inGame: !!(p && p.inGame), onFirstPage: (p && p.onFirstPage !== undefined) ? !!p.onFirstPage : true }));
+            onlinePresenceList = Object.entries(data).map(([key, p]) => ({ key: key, username: (p && p.username) ? p.username : 'Guest', inGame: !!(p && p.inGame), onFirstPage: (p && p.onFirstPage !== undefined) ? !!p.onFirstPage : true, roomId: (p && p.roomId) ? p.roomId : null }));
             // ── Real-time online indicator: this presence listener fires
             // continuously (via Firebase's live onValue subscription) any
             // time a player connects or disconnects, so the count shown in
@@ -4480,7 +4493,7 @@
             checkPendingChallengeOnReturn();
         }
         if (!myPresenceRef) return;
-        window.firebaseUpdate(myPresenceRef, { inGame: inGame });
+        window.firebaseUpdate(myPresenceRef, { inGame: inGame, roomId: inGame ? currentRoomId : null });
     }
 
     // ── One-time read of this player's challenge node, used only when
@@ -4510,7 +4523,7 @@
         if (otherPlayersOnline.length === 0) {
             bodyEl.innerHTML = '<div class="no-leaderboard">No players online</div>';
         } else {
-            bodyEl.innerHTML = '<div class="online-players-list">' + otherPlayersOnline.map((p, i) => '<div class="online-player-item"' + (myPresenceRef && p.key !== myPresenceRef.key && !p.inGame && p.onFirstPage ? ' onclick="challengePlayer(\'' + p.key + '\')"' : '') + '><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + p.username + '</div>' + (p.inGame ? '<div class="online-player-playing">PLAYING</div>' : (!p.onFirstPage ? '<div class="online-player-unavailable">Unavailable</div>' : '<div class="online-player-dot"></div>')) + '</div>').join('') + '</div>';
+            bodyEl.innerHTML = '<div class="online-players-list">' + otherPlayersOnline.map((p, i) => '<div class="online-player-item"' + (myPresenceRef && p.key !== myPresenceRef.key && !p.inGame && p.onFirstPage ? ' onclick="challengePlayer(\'' + p.key + '\')"' : '') + '><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + p.username + '</div>' + (p.inGame ? '<div class="online-player-playing">' + (p.roomId ? '<span class="online-player-spectate-btn" onclick="event.stopPropagation(); spectateOnlinePlayer(\'' + p.roomId + '\')">👁</span>' : '') + 'PLAYING</div>' : (!p.onFirstPage ? '<div class="online-player-unavailable">Unavailable</div>' : '<div class="online-player-dot"></div>')) + '</div>').join('') + '</div>';
         }
     }
 
@@ -4520,7 +4533,7 @@
         if (otherPlayersOnline.length === 0) {
             bodyEl.innerHTML = '<div class="no-leaderboard">No players online</div>';
         } else {
-            bodyEl.innerHTML = '<div class="online-players-list">' + otherPlayersOnline.map((p, i) => '<div class="online-player-item"' + (myPresenceRef && p.key !== myPresenceRef.key && !p.inGame && p.onFirstPage ? ' onclick="challengePlayer(\'' + p.key + '\')"' : '') + '><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + p.username + '</div>' + (p.inGame ? '<div class="online-player-playing">PLAYING</div>' : (!p.onFirstPage ? '<div class="online-player-unavailable">Unavailable</div>' : '<div class="online-player-dot"></div>')) + '</div>').join('') + '</div>';
+            bodyEl.innerHTML = '<div class="online-players-list">' + otherPlayersOnline.map((p, i) => '<div class="online-player-item"' + (myPresenceRef && p.key !== myPresenceRef.key && !p.inGame && p.onFirstPage ? ' onclick="challengePlayer(\'' + p.key + '\')"' : '') + '><div class="online-player-index">' + (i + 1) + '</div><div class="online-player-name">' + p.username + '</div>' + (p.inGame ? '<div class="online-player-playing">' + (p.roomId ? '<span class="online-player-spectate-btn" onclick="event.stopPropagation(); spectateOnlinePlayer(\'' + p.roomId + '\')">👁</span>' : '') + 'PLAYING</div>' : (!p.onFirstPage ? '<div class="online-player-unavailable">Unavailable</div>' : '<div class="online-player-dot"></div>')) + '</div>').join('') + '</div>';
         }
         document.getElementById('online-players-modal').classList.add('show');
     }
@@ -5676,6 +5689,35 @@
         document.getElementById('spectate-modal').classList.remove('show');
         document.getElementById('spectate-host-id').value = '';
         document.getElementById('spectate-error').textContent = '';
+    }
+
+    // ── Lets a player tap the eye button next to a PLAYING entry in the
+    // Online Players list to spectate that specific game directly, without
+    // needing to manually type in the 3-digit Host ID. ──
+    async function spectateOnlinePlayer(roomId) {
+        if (!roomId) return;
+        document.getElementById('online-players-modal').classList.remove('show');
+        document.getElementById('spectate-loading-screen').classList.add('show');
+
+        const roomRef = window.firebaseRef(window.firebaseDB, 'rooms/' + roomId);
+        const snapshot = await window.firebaseGet(roomRef);
+
+        if (!snapshot.exists()) {
+            document.getElementById('spectate-loading-screen').classList.remove('show');
+            return;
+        }
+
+        const roomData = snapshot.val();
+        if (roomData.status !== 'playing') {
+            document.getElementById('spectate-loading-screen').classList.remove('show');
+            return;
+        }
+
+        currentRoomId = roomId;
+        isSpectating = true;
+        spectatorConnected = false;
+        myPlayerNumber = null;
+        startSpectating(roomId);
     }
 
     async function joinSpectate() {
@@ -7388,6 +7430,7 @@
     });
 
     window.spectateGame = spectateGame;
+    window.spectateOnlinePlayer = spectateOnlinePlayer;
     window.openLeaderboard = openLeaderboard;
     window.closeLeaderboardModal = closeLeaderboardModal;
     window.openOnlinePlayersModal = openOnlinePlayersModal;
