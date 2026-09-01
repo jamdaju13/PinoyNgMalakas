@@ -5618,6 +5618,29 @@
         if (!isDraw && winnerUsername) {
             await autoAddRegisteredWinnerToLeaderboard(winnerUsername);
         }
+
+        if (!isDraw && loserUsername) {
+            await removeRegisteredUsernameOnLoss(loserUsername);
+        }
+    }
+
+    // ── Automatically removes a losing player's username from the Admin
+    // Dashboard's registration page. Only usernames registered through the
+    // Admin Dashboard registration page are affected. When a registered
+    // player loses a game, their entry is deleted from registeredUsernames
+    // so they no longer appear on the register page. ──
+    async function removeRegisteredUsernameOnLoss(name) {
+        const registeredRef = window.firebaseRef(window.firebaseDB, 'registeredUsernames');
+        const registeredSnapshot = await window.firebaseGet(registeredRef);
+        if (!registeredSnapshot.exists()) return;
+
+        const data = registeredSnapshot.val();
+        for (const [id, entry] of Object.entries(data)) {
+            if (entry.username === name) {
+                const entryRef = window.firebaseRef(window.firebaseDB, 'registeredUsernames/' + id);
+                await window.firebaseRemove(entryRef);
+            }
+        }
     }
 
     // ── Automatically adds a winning registered player's score to the
@@ -7502,6 +7525,7 @@
     window.deleteAllLeaderboard = deleteAllLeaderboard;
     window.deleteAllUsernames = deleteAllUsernames;
     window.autoAddRegisteredWinnerToLeaderboard = autoAddRegisteredWinnerToLeaderboard;
+    window.removeRegisteredUsernameOnLoss = removeRegisteredUsernameOnLoss;
     window.registerUsername = registerUsername;
     window.pasteAndRegisterUsernames = pasteAndRegisterUsernames;
     window.refreshRegisteredUsernames = refreshRegisteredUsernames;
