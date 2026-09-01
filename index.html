@@ -513,16 +513,18 @@
         flex-direction: column;
         gap: 20px;
         width: 100%;
+        max-width: 240px;
+        margin: 0 auto;
     }
 
     .host-join-btn {
         width: 100%;
-        padding: 18px 32px;
+        padding: 12px 24px;
         background: linear-gradient(135deg, #795548 0%, #4E342E 100%);
         color: #ffffff;
         border: none;
         border-radius: 12px;
-        font-size: 15px;
+        font-size: 12px;
         font-family: inherit;
         font-weight: 600;
         text-transform: uppercase;
@@ -627,36 +629,56 @@
     .back-btn {
         background: transparent;
         color: #FFFFFF;
-        border: 1px solid #FFFFFF;
-        padding: 12px 32px;
+        border: none;
+        padding: 0;
         font-size: 14px;
         font-family: inherit;
         text-transform: uppercase;
         letter-spacing: 2px;
         cursor: pointer;
         transition: all 0.2s ease;
-        border-radius: 8px;
         margin-top: 20px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .back-btn:hover {
-        background: #FFFFFF;
-        color: #000000;
+        color: #cccccc;
     }
 
     #admin-password-screen .back-btn {
         margin-left: auto;
+        margin-right: auto;
         display: block;
     }
 
     #host-join-screen .back-btn {
         margin-left: auto;
+        margin-right: auto;
         display: block;
     }
 
     #join-lobby-screen .back-btn {
         margin-left: auto;
+        margin-right: auto;
         display: block;
+    }
+
+    #join-lobby-screen .continue-btn {
+        width: auto;
+        padding: 12px 24px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #room-id-input {
+        width: auto;
+        max-width: 140px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .room-input {
@@ -3269,7 +3291,10 @@
             font-size: 18px;
         }
 
-        .back-btn,
+        .back-btn {
+            font-size: 12px;
+        }
+
         .control-btn,
         .pagination-btn {
             padding: 10px 18px;
@@ -3435,10 +3460,7 @@
     top: 18px;
     right: 18px;
     margin: 0;
-    padding: 8px 20px;
     font-size: 11px;
-    background: rgba(0, 0, 0, 0.35);
-    border-color: rgba(255, 255, 255, 0.35);
 }
 
 .pp-avatar {
@@ -3814,8 +3836,7 @@
                     <button class="control-btn secondary player-sort-btn" id="sort-btn-cycle" onclick="cyclePlayerSort()">Sort: Win Rate</button>
                 </div>
                 <div class="control-row player-filter-row">
-                    <button class="control-btn secondary player-filter-btn" id="filter-btn-winners" onclick="togglePlayerFilter('winners')">Show Only Winners</button>
-                    <button class="control-btn secondary player-filter-btn" id="filter-btn-losers" onclick="togglePlayerFilter('losers')">Show Only Losers</button>
+                    <button class="control-btn secondary player-filter-btn" id="filter-btn-cycle" onclick="cyclePlayerFilter()">Show Only Winners</button>
                 </div>
             </div>
             <div class="players-table-wrap">
@@ -3931,8 +3952,6 @@
     </div>
 
     <div id="host-join-screen" onclick="handleSpectateTap()">
-        <h1 class="start-title">GOODLUCK!</h1>
-        <div class="player-username-display" id="display-username"></div>
         <div class="start-container no-box">
             <div class="host-join-buttons">
                 <button class="host-join-btn" onclick="hostGame()">Host</button>
@@ -4150,12 +4169,19 @@
     // players by their registration/creation timestamp in descending order
     // (most recently added players first, oldest players last).
     let currentPlayerSort = 'newest';
-    // Players tab filter mode: 'none' | 'winners' | 'losers'. Toggled via the
-    // "Show Only Winners" / "Show Only Losers" buttons; works together with
-    // whatever sort mode is currently active.
+    // Players tab filter mode: 'none' | 'winners' | 'losers'. Cycled via the
+    // single "Show Only Winners / Losers" button (None → Winners → Losers →
+    // None, repeating); works together with whatever sort mode is currently
+    // active.
     let currentPlayerFilter = 'none';
     const PLAYER_SORT_CYCLE = ['newest', 'winrate', 'wins', 'losses'];
     const PLAYER_SORT_LABELS = { newest: 'Sort: Newest', winrate: 'Sort: Win Rate', wins: 'Sort: Wins', losses: 'Sort: Losses' };
+    const PLAYER_FILTER_CYCLE = ['none', 'winners', 'losers'];
+    // Label shown reflects the CURRENT filter state's button text: 'none'
+    // shows "Show Only Winners" (the first filter you'll land on), 'winners'
+    // shows "Show Only Losers" (the next filter you'll land on), and
+    // 'losers' shows "Show All" (clicking resets back to no filter).
+    const PLAYER_FILTER_LABELS = { none: 'Show Only Winners', winners: 'Show Only Losers', losers: 'Show All' };
     // Find a Match: session id used to identify this client while waiting in the
     // matchmaking queue, and a reference to the active queue listener (if any)
     // so it can be detached on match or cancel.
@@ -4971,19 +4997,21 @@
         if (btn) btn.textContent = PLAYER_SORT_LABELS[currentPlayerSort] || 'Sort: Newest';
     }
 
-    // ── Filter control for the Players tab: toggles "Show Only Winners" /
-    // "Show Only Losers". Clicking an already-active filter turns it back off
-    // (reverting to showing all players). Works together with whatever sort
-    // mode is currently selected — refreshPlayersList() applies the filter
-    // and then sorts the filtered results. ──
-    function togglePlayerFilter(type) {
-        currentPlayerFilter = (currentPlayerFilter === type) ? 'none' : type;
-        document.querySelectorAll('.player-filter-btn').forEach(btn => btn.classList.remove('active'));
-        if (currentPlayerFilter !== 'none') {
-            const activeBtn = document.getElementById('filter-btn-' + currentPlayerFilter);
-            if (activeBtn) activeBtn.classList.add('active');
-        }
+    // ── Filter control for the Players tab: single button that cycles
+    // through None → Winners → Losers → None, repeating. Works together with
+    // whatever sort mode is currently selected — refreshPlayersList() applies
+    // the filter and then sorts the filtered results. ──
+    function cyclePlayerFilter() {
+        const currentIndex = PLAYER_FILTER_CYCLE.indexOf(currentPlayerFilter);
+        currentPlayerFilter = PLAYER_FILTER_CYCLE[(currentIndex + 1) % PLAYER_FILTER_CYCLE.length];
+        updatePlayerFilterButtonLabel();
         refreshPlayersList();
+    }
+
+    function updatePlayerFilterButtonLabel() {
+        const btn = document.getElementById('filter-btn-cycle');
+        if (btn) btn.textContent = PLAYER_FILTER_LABELS[currentPlayerFilter] || 'Show Only Winners';
+        if (btn) btn.classList.toggle('active', currentPlayerFilter !== 'none');
     }
 
     // ── PLAYERS TAB: aggregate gameHistory into a per-player stats table ──
@@ -4993,6 +5021,7 @@
         const tbody = document.getElementById('players-table-body');
 
         updatePlayerSortButtonLabel();
+        updatePlayerFilterButtonLabel();
 
         if (!snapshot.exists()) {
             tbody.innerHTML = '<tr><td colspan="1" class="no-games">No players found</td></tr>';
@@ -5883,7 +5912,8 @@
             openProfile();
             return;
         }
-        document.getElementById('display-username').textContent = player1Username;
+        const displayUsernameEl = document.getElementById('display-username');
+        if (displayUsernameEl) displayUsernameEl.textContent = player1Username;
         document.getElementById('start-screen').classList.add('hidden');
         broadcastOnFirstPage();
         document.getElementById('host-join-screen').classList.add('show');
@@ -7465,7 +7495,7 @@
     window.openPlayerHistory = openPlayerHistory;
     window.closePlayerHistory = closePlayerHistory;
     window.cyclePlayerSort = cyclePlayerSort;
-    window.togglePlayerFilter = togglePlayerFilter;
+    window.cyclePlayerFilter = cyclePlayerFilter;
     window.findMatch = findMatch;
     window.playVsAI = playVsAI;
     window.openProfile = openProfile;
