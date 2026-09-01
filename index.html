@@ -4304,6 +4304,33 @@
         .then(d => { playerIPAddress = d.ip; })
         .catch(() => { playerIPAddress = 'Unknown'; });
 
+    // ── Builds the "other players online" list from the raw presence data.
+    // Opening a second tab creates a second presence entry (each tab has its
+    // own Firebase connection), so relying only on "p.key !== myPresenceRef.key"
+    // to exclude yourself would still show your OTHER tab as if it were a
+    // separate online player with a duplicate username. This instead excludes
+    // every presence entry that shares the current player's username, and
+    // also de-duplicates any remaining entries by username, so a single
+    // player never appears more than once in the Online Players list. ──
+    function getOtherPlayersOnline() {
+        if (!Array.isArray(onlinePresenceList)) return [];
+        const myUsername = (player1Username || 'Guest').toLowerCase();
+        const filtered = onlinePresenceList.filter(p => {
+            if (myPresenceRef && p.key === myPresenceRef.key) return false;
+            if ((p.username || 'Guest').toLowerCase() === myUsername) return false;
+            return true;
+        });
+        const seenUsernames = new Set();
+        const deduped = [];
+        filtered.forEach(p => {
+            const key = (p.username || 'Guest').toLowerCase();
+            if (seenUsernames.has(key)) return;
+            seenUsernames.add(key);
+            deduped.push(p);
+        });
+        return deduped;
+    }
+
     // ── ONLINE PLAYERS INDICATOR: registers this client's presence in Firebase
     // and keeps a live count of connected clients displayed on the main screen ──
     function initOnlinePresence() {
@@ -4335,7 +4362,7 @@
             // the top-right indicator always reflects who is online right
             // now, with no manual refresh or polling needed. The current/own
             // player is excluded from this count. ──
-            const otherPlayersOnline = onlinePresenceList.filter(p => !myPresenceRef || p.key !== myPresenceRef.key);
+            const otherPlayersOnline = getOtherPlayersOnline();
             if (onlineIndicatorEl) onlineIndicatorEl.textContent = 'ONLINE: ' + otherPlayersOnline.length;
             renderOnlinePlayersList();
             // ── Keep the Players tab's online-status filtering in sync in real
@@ -4546,7 +4573,7 @@
         const modalEl = document.getElementById('online-players-modal');
         if (!modalEl || !modalEl.classList.contains('show')) return;
         const bodyEl = document.getElementById('online-players-body');
-        const otherPlayersOnline = onlinePresenceList.filter(p => !myPresenceRef || p.key !== myPresenceRef.key);
+        const otherPlayersOnline = getOtherPlayersOnline();
         if (otherPlayersOnline.length === 0) {
             bodyEl.innerHTML = '<div class="no-leaderboard">No players online</div>';
         } else {
@@ -4556,7 +4583,7 @@
 
     function openOnlinePlayersModal() {
         const bodyEl = document.getElementById('online-players-body');
-        const otherPlayersOnline = onlinePresenceList.filter(p => !myPresenceRef || p.key !== myPresenceRef.key);
+        const otherPlayersOnline = getOtherPlayersOnline();
         if (otherPlayersOnline.length === 0) {
             bodyEl.innerHTML = '<div class="no-leaderboard">No players online</div>';
         } else {
