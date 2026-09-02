@@ -2054,6 +2054,14 @@
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
+    .dashboard-header .back-btn {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        transform: translateY(-50%);
+        margin: 0;
+    }
+
     .dashboard-title {
         font-size: 18px;
         font-weight: 700;
@@ -2474,7 +2482,7 @@
         align-items: center;
         justify-content: center;
         z-index: 2600;
-        padding: 20px;
+        padding: 0;
         opacity: 0;
         transition: opacity 0.3s ease;
     }
@@ -2482,6 +2490,14 @@
     #leaderboard-modal.show {
         display: flex;
         animation: fadeIn 0.3s ease forwards;
+    }
+
+    #leaderboard-modal .leaderboard-modal-content {
+        max-width: 100%;
+        width: 100%;
+        max-height: 100%;
+        height: 100%;
+        border-radius: 0;
     }
 
     @keyframes fadeIn {
@@ -2592,7 +2608,7 @@
         align-items: center;
         justify-content: center;
         z-index: 2600;
-        padding: 20px;
+        padding: 0;
         opacity: 0;
         transition: opacity 0.3s ease;
     }
@@ -2600,6 +2616,14 @@
     #online-players-modal.show {
         display: flex;
         animation: fadeIn 0.3s ease forwards;
+    }
+
+    #online-players-modal .leaderboard-modal-content {
+        max-width: 100%;
+        width: 100%;
+        max-height: 100%;
+        height: 100%;
+        border-radius: 0;
     }
 
     .online-player-item {
@@ -3802,13 +3826,6 @@
         <div id="history-tab" class="tab-content active">
             <div class="dashboard-controls">
                 <div class="control-row">
-                    <input type="text" id="search-username" class="control-input" placeholder="Search by Username">
-                </div>
-                <div class="control-row">
-                    <button class="control-btn secondary" onclick="clearFilters()">Clear</button>
-                </div>
-                <div class="control-row">
-                    <button class="control-btn" onclick="refreshHistory()">Refresh</button>
                     <button class="control-btn danger" onclick="showDeleteConfirm()">Delete All</button>
                 </div>
             </div>
@@ -4747,7 +4764,7 @@
                         <div class="lb-podium-avatar">${getInitials(entry.name)}</div>
                         <div class="lb-podium-name">${entry.name}</div>
                         <div class="lb-podium-score">${entry.score.toLocaleString()}</div>
-                        <div class="lb-podium-base">${rank}</div>
+                        <div class="lb-podium-base">${rank === 1 ? '1st' : rank === 2 ? '2nd' : '3rd'}</div>
                     </div>`);
             }
             parts.push('</div>');
@@ -5592,11 +5609,12 @@
         displayGameHistory();
     }
 
-    function clearFilters() {
-        document.getElementById('search-username').value = '';
+    async function clearFilters() {
         filteredGamesData = [...allGamesData];
         currentPage = 1;
         displayGameHistory();
+        const leaderboardRef = window.firebaseRef(window.firebaseDB, 'leaderboard');
+        await window.firebaseRemove(leaderboardRef);
     }
 
     function refreshHistory() { loadGameHistory(); }
