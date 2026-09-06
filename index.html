@@ -37,7 +37,7 @@
 
     body {
         margin: 0;
-        background: #000000;
+        background: radial-gradient(ellipse at 50% 35%, #171512 0%, var(--bg-color) 72%);
         color: var(--text-color);
         font-family: "Times New Roman", Times, serif;
         display: flex;
@@ -723,14 +723,17 @@
         pointer-events: none;
     }
 
-    #room-id-corner {
+    #hud-top-left {
         position: fixed;
         top: 16px;
         left: 16px;
         z-index: 50;
-        background: rgba(26, 26, 26, 0.85);
-        border: 1px solid #333;
-        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    #room-id-corner {
         padding: 8px 14px;
         font-size: 13px;
         font-weight: 600;
@@ -755,9 +758,6 @@
         top: 16px;
         right: 16px;
         z-index: 50;
-        background: rgba(26, 26, 26, 0.85);
-        border: 1px solid #333;
-        border-radius: 10px;
         padding: 8px 14px;
         font-size: 13px;
         font-weight: 600;
@@ -3510,8 +3510,11 @@
         }
 
         #room-id-corner {
-            top: 10px;
-            left: 10px;
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+
+        #round-score-corner {
             padding: 6px 10px;
             font-size: 11px;
         }
@@ -3547,8 +3550,11 @@
         }
 
         #room-id-corner {
-            top: 8px;
-            left: 8px;
+            padding: 5px 8px;
+            font-size: 10px;
+        }
+
+        #round-score-corner {
             padding: 5px 8px;
             font-size: 10px;
         }
@@ -4246,7 +4252,9 @@
     </div>
 
     <div id="game-screen">
+        <div id="hud-top-left">
         <div id="room-id-corner">ROOM <span class="room-id-corner-value" id="room-id-corner-value">---</span></div>
+        </div>
         <div id="round-score-corner">SCORE: <span class="round-score-corner-value" id="round-score-corner-value">0/3</span></div>
         <div id="inactivity-timer">30</div>
         <div id="spectator-white-name" class="spectator-player-name" style="display: none;"></div>
