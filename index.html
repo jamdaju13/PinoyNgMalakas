@@ -6137,7 +6137,21 @@
             });
 
             if (lockResult && lockResult.committed) {
-                const newScores = applyScoreForResult(isDraw ? 0 : winningPlayerNumber);
+                // ── FIX (score +2 on checkmate): applyScoreForResult() used to read
+                // the local myScore/opponentScore mirror as its base before adding
+                // +1. That mirror is kept in sync by the room listener and can be
+                // briefly stale during the async gap between this client detecting
+                // the checkmate and reaching this point (e.g. an intervening room
+                // snapshot re-syncing it), so basing the increment on it risked
+                // applying +1 on top of an already-wrong value. Reading the
+                // authoritative p1Score/p2Score from Firebase right here — the same
+                // pattern already used below for roundsPlayed — guarantees the
+                // increment is always exactly +1 on top of the true current score. ──
+                const scoreSnapshot = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'rooms/' + currentRoomId));
+                const scoreSnapshotVal = scoreSnapshot.val() || {};
+                const authoritativeP1Score = typeof scoreSnapshotVal.p1Score === 'number' ? scoreSnapshotVal.p1Score : 0;
+                const authoritativeP2Score = typeof scoreSnapshotVal.p2Score === 'number' ? scoreSnapshotVal.p2Score : 0;
+                const newScores = applyScoreForResult(isDraw ? 0 : winningPlayerNumber, authoritativeP1Score, authoritativeP2Score);
                 // ── FIX: use the authoritative roundsPlayed value from Firebase (not
                 // the local mirror, which can be stale) so that ending a round —
                 // including via surrender — always advances the best-of-3 series by
@@ -7399,9 +7413,11 @@
 
     // Computes the new p1Score/p2Score after a round ends with the given winning player number.
     // winningPlayerNumber: 1 or 2. Pass 0/null for a draw (no score change).
-    function applyScoreForResult(winningPlayerNumber) {
-        let p1Score = myPlayerNumber === 1 ? myScore : opponentScore;
-        let p2Score = myPlayerNumber === 2 ? myScore : opponentScore;
+    // authoritativeP1Score/authoritativeP2Score: the current scores as read fresh from
+    // Firebase, used as the base for the +1 increment instead of the local mirror.
+    function applyScoreForResult(winningPlayerNumber, authoritativeP1Score, authoritativeP2Score) {
+        let p1Score = authoritativeP1Score;
+        let p2Score = authoritativeP2Score;
 
         if (winningPlayerNumber === 1) p1Score += 1;
         else if (winningPlayerNumber === 2) p2Score += 1;
