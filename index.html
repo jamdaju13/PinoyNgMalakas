@@ -1647,6 +1647,7 @@
     }
 
     .trophy-icon {
+        display: none !important;
         font-size: 100px;
         margin-bottom: 20px;
         opacity: 1;
@@ -6110,7 +6111,7 @@
                     // picks up the fresh round via its own room listener.
                     setTimeout(() => {
                         proceedToNextRound();
-                    }, 3000);
+                    }, 1000);
                 }
             }
             // If the lock was lost, the other client is already applying this
@@ -6316,6 +6317,7 @@
     // lower-left edge (angled inward ~60°) and a matching burst from the
     // lower-right edge (angled inward ~120°), both launched simultaneously.
     function createConfetti() {
+        return; // Confetti explosion effect disabled
         winnerScreenEl.querySelectorAll('.confetti').forEach(c => c.remove());
         const colors = ['#FFD700', '#FFA500', '#FF6347', '#4169E1', '#32CD32', '#FF1493'];
         const perSideCount = isMobile ? 60 : 100;
