@@ -6047,7 +6047,7 @@
                 roundsPlayed = newRoundsPlayed;
                 updateRoundScoreDisplay();
 
-                const isSeriesOver = newRoundsPlayed >= TOTAL_ROUNDS;
+                const isSeriesOver = newScores.p1Score >= TOTAL_ROUNDS || newScores.p2Score >= TOTAL_ROUNDS;
 
                 if (isSeriesOver) {
                     // ── Deciding round: the series winner is whichever player
