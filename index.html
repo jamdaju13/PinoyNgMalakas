@@ -1673,14 +1673,14 @@
         will-change: transform, opacity;
     }
 
-    /* Username slides in from the right and settles to the left */
+    /* Username slides in from the left and settles into place */
     #winner-screen.show .winner-username {
         animation: winnerUsernameSlideLeft 0.6s var(--ease-smooth, ease) forwards;
     }
 
     @keyframes winnerUsernameSlideLeft {
         0% {
-            transform: translateX(120px);
+            transform: translateX(-120px);
             opacity: 0;
         }
         100% {
@@ -1703,14 +1703,14 @@
         will-change: transform, opacity;
     }
 
-    /* "WINNER" label slides in from the left and settles to the right */
+    /* "WINNER" label slides in from the right and settles into place */
     #winner-screen.show .winner-label {
         animation: winnerLabelSlideRight 0.6s var(--ease-smooth, ease) forwards;
     }
 
     @keyframes winnerLabelSlideRight {
         0% {
-            transform: translateX(-120px);
+            transform: translateX(120px);
             opacity: 0;
         }
         100% {
@@ -1820,118 +1820,6 @@
         100% {
             transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) translateZ(0);
             opacity: 0;
-        }
-    }
-
-    /* ── Synchronized win/score black-screen transition: fully additive,
-       does not alter any existing game, scoring, UI, control, or networking
-       logic. Sits above absolutely everything (including the winner screen,
-       chat, and modals) so that whatever is happening underneath is hidden
-       for the full 3.5s duration, then removed to reveal normal play. ── */
-    #win-transition-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #000000;
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        overflow: hidden;
-        padding: 20px;
-    }
-
-    #win-transition-overlay.show {
-        display: flex;
-    }
-
-    .wt-text-wrap {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    .wt-username {
-        font-size: clamp(24px, 8vw, 56px);
-        font-weight: 700;
-        letter-spacing: clamp(2px, 0.5vw, 6px);
-        color: #FFD700;
-        text-transform: uppercase;
-        white-space: nowrap;
-        max-width: 90vw;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 1.2;
-        margin: 0 0 12px 0;
-        opacity: 0;
-    }
-
-    .wt-winner-label {
-        font-size: clamp(20px, 6vw, 40px);
-        font-weight: 900;
-        letter-spacing: 10px;
-        color: #FFFFFF;
-        text-transform: uppercase;
-        margin: 0;
-        opacity: 0;
-    }
-
-    /* Username slides in from the left, holds, then fades out */
-    #win-transition-overlay.show .wt-username {
-        animation: wtSlideLeft 3.4s var(--ease-smooth, ease) forwards;
-    }
-
-    /* "WINNER" label slides in from the right, holds, then fades out */
-    #win-transition-overlay.show .wt-winner-label {
-        animation: wtSlideRight 3.4s var(--ease-smooth, ease) forwards;
-    }
-
-    @keyframes wtSlideLeft {
-        0% {
-            transform: translateX(120px);
-            opacity: 0;
-        }
-        18% {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        82% {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        100% {
-            transform: translateX(-60px);
-            opacity: 0;
-        }
-    }
-
-    @keyframes wtSlideRight {
-        0% {
-            transform: translateX(-120px);
-            opacity: 0;
-        }
-        18% {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        82% {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        100% {
-            transform: translateX(60px);
-            opacity: 0;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .wt-winner-label {
-            letter-spacing: 6px;
         }
     }
 
@@ -4352,15 +4240,6 @@
         </div>
     </div>
 
-    <!-- Synchronized win/score black-screen transition overlay: purely additive,
-         shown briefly whenever a player wins or scores, on top of everything else. -->
-    <div id="win-transition-overlay">
-        <div class="wt-text-wrap">
-            <div class="wt-username" id="wt-username">PLAYER</div>
-            <div class="wt-winner-label">WINNER</div>
-        </div>
-    </div>
-
     <div id="chat-overlay">
         <div id="chat-container">
             <div id="chat-header">
@@ -4456,13 +4335,20 @@
     let allLeaderboardData = [];
     let editingLeaderboardId = null;
     let lastMatchReason = '';
-    // Match score tracking (persists across rematches within the same room)
+    // Match score tracking (reset at the start of every new match)
     let myScore = 0;
     let opponentScore = 0;
-    // Tracks how many rounds have been played in the current best-of-3
-    // match. Rounds 1 and 2 auto-restart; the winner page only shows once
-    // this reaches 3.
+    // Tracks how many rounds have been played in the current match. Each
+    // match now consists of exactly TOTAL_ROUNDS rounds, so the final
+    // winner page (based on total rounds won) only shows once this
+    // reaches TOTAL_ROUNDS; every round before that automatically
+    // continues into the next one.
     let roundsPlayed = 0;
+    const TOTAL_ROUNDS = 3;
+    // Timestamp (from Firebase) of the last automatic round-to-round
+    // transition this client has already reacted to, so a fresh
+    // proceedToNextRound() write is only ever applied once per round.
+    let lastSeenRoundStartAt = 0;
     // Players tab sort mode: 'newest' | 'winrate' | 'wins' | 'losses'. Cycled via
     // the single "Sort" button (Newest → Win Rate → Wins → Losses → Newest,
     // repeating). 'newest' is the default sort applied on load: it orders
@@ -4518,16 +4404,6 @@
     const winnerScreenEl = document.getElementById('winner-screen');
     const winnerUsernameEl = document.getElementById('winner-username');
     const winnerReasonEl = document.getElementById('winner-reason');
-    // ── Synchronized win/score black-screen transition: DOM refs + tracking
-    // state. Purely additive — does not replace winnerScreenEl or any of its
-    // existing behavior. ──
-    const winTransitionOverlayEl = document.getElementById('win-transition-overlay');
-    const winTransitionUsernameEl = document.getElementById('wt-username');
-    let winTransitionHideTimer = null;
-    let lastWinTransitionTs = 0;
-    let winTransitionBaselineCaptured = false;
-    let lastSpectatorWinTransitionTs = 0;
-    let spectatorWinTransitionBaselineCaptured = false;
     // ── BUGFIX (duplicate winner slide-in): on the client that just
     // detected the checkmate, showWinnerScreen() was being called twice
     // back-to-back — once directly from endMatch()'s own setTimeout, and a
@@ -4539,6 +4415,11 @@
     // screen is hidden/reset (rematch, spectator rematch, reconnect) so a
     // genuine new win can still show it again. ──
     let winnerScreenShown = false;
+    // Same duplicate-call guard as winnerScreenShown, but for the brief
+    // per-round winner banner shown between rounds of the 3-round series
+    // (see showRoundWinnerScreen()). Reset to false whenever a new round
+    // begins locally (see beginNextRoundLocally()).
+    let roundWinnerScreenShown = false;
     const gameScreenEl = document.getElementById('game-screen');
     const spectatorWhiteNameEl = document.getElementById('spectator-white-name');
     const spectatorBlackNameEl = document.getElementById('spectator-black-name');
@@ -4962,17 +4843,17 @@
         roomIdCornerEl.classList.remove('show');
     }
 
-    // ── Shows "SCORE: {roundsPlayed}/3" in the top-right corner during an
-    // online multiplayer match, tracking progress through the best-of-3
-    // series. Hidden for practice matches against the Expert AI, which are
-    // not played as a best-of-3 series. ──
+    // ── Shows "SCORE: {myScore}/3" in the top-right corner during an
+    // online multiplayer match, reflecting how many of the 3 rounds in
+    // the current series this player has won so far. Hidden for practice
+    // matches against the Expert AI. ──
     function updateRoundScoreDisplay() {
         if (!roundScoreCornerEl || !roundScoreCornerValueEl) return;
         if (isVsAI || !currentRoomId) {
             roundScoreCornerEl.classList.remove('show');
             return;
         }
-        roundScoreCornerValueEl.textContent = (myScore || 0) + '/3';
+        roundScoreCornerValueEl.textContent = (myScore || 0) + '/' + TOTAL_ROUNDS;
         roundScoreCornerEl.classList.add('show');
     }
 
@@ -6106,18 +5987,21 @@
             await recordGameHistoryOnce(winnerUsername, loserUsername, reason, winnerIP, loserIP, isDraw);
         }
 
-        // ── Best-of-3 auto-restart (online multiplayer only): rounds restart
-        // automatically, with neither player needing to accept a rematch.
-        // The winner page only appears once a player's score actually
-        // reaches 3, declaring that player the winner. A genuine opponent
-        // disconnect always ends the match immediately instead of waiting
-        // for a score of 3, since there is no one left to keep playing
-        // rounds with. ──
+        // ── Best-of-TOTAL_ROUNDS match: each match now consists of exactly
+        // TOTAL_ROUNDS (3) rounds. Practice matches against the Expert AI
+        // have no currentRoomId at all, so they fall through untouched and
+        // still end immediately on a single round, exactly as before. For a
+        // real online match, the round that just ended either automatically
+        // continues into the next round (if fewer than TOTAL_ROUNDS rounds
+        // have been played) or — on the deciding TOTAL_ROUNDS-th round —
+        // ends the whole series and shows the final winner page. ──
         let showFinalWinnerScreen = true;
+        let showRoundWinnerBanner = false;
         let finalWinnerUsername = isDraw ? 'DRAW' : winnerUsername;
-        const isAbandonment = reason === 'Disconnect';
+        let bannerWinnerUsername = finalWinnerUsername;
 
         if (currentRoomId) {
+            showFinalWinnerScreen = false;
             const roomRef = window.firebaseRef(window.firebaseDB, 'rooms/' + currentRoomId);
 
             // ── FIX: checkmate is detected independently by BOTH clients (each
@@ -6154,107 +6038,94 @@
                 const newScores = applyScoreForResult(isDraw ? 0 : winningPlayerNumber, authoritativeP1Score, authoritativeP2Score);
                 // ── FIX: use the authoritative roundsPlayed value from Firebase (not
                 // the local mirror, which can be stale) so that ending a round —
-                // including via surrender — always advances the best-of-3 series by
-                // exactly one round instead of ever jumping ahead and ending the
-                // whole match before 3 rounds have actually been played. ──
+                // including via surrender — always advances the round count by
+                // exactly one instead of ever double-counting the round that just
+                // finished. ──
                 const roundsPlayedSnapshot = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'rooms/' + currentRoomId + '/roundsPlayed'));
                 const authoritativeRoundsPlayed = typeof roundsPlayedSnapshot.val() === 'number' ? roundsPlayedSnapshot.val() : (roundsPlayed || 0);
                 const newRoundsPlayed = authoritativeRoundsPlayed + 1;
                 roundsPlayed = newRoundsPlayed;
                 updateRoundScoreDisplay();
 
-                // ── FIX: the match only ends once a player's score actually reaches
-                // 3, not simply because 3 rounds have been played — so if the score
-                // is e.g. 2-1 after 3 rounds, the series keeps going instead of
-                // ending early. ──
-                if (!isAbandonment && newScores.p1Score < 3 && newScores.p2Score < 3) {
-                    showFinalWinnerScreen = false;
+                const isSeriesOver = newRoundsPlayed >= TOTAL_ROUNDS;
+
+                if (isSeriesOver) {
+                    // ── Deciding round: the series winner is whichever player
+                    // won more of the TOTAL_ROUNDS rounds overall — not
+                    // necessarily the winner of this particular round — so the
+                    // result is fair and symmetric for host and joiner alike.
+                    // Equal round wins across the series is treated as a
+                    // series draw. ──
+                    let seriesWinnerPlayerNumber;
+                    if (newScores.p1Score > newScores.p2Score) seriesWinnerPlayerNumber = 1;
+                    else if (newScores.p2Score > newScores.p1Score) seriesWinnerPlayerNumber = 2;
+                    else seriesWinnerPlayerNumber = 0;
+
+                    const seriesWinnerUsername = seriesWinnerPlayerNumber === 0
+                        ? 'DRAW'
+                        : (seriesWinnerPlayerNumber === myPlayerNumber ? player1Username : opponentUsername);
+
+                    finalWinnerUsername = seriesWinnerUsername;
+                    showFinalWinnerScreen = true;
+
                     await window.firebaseUpdate(roomRef, {
-                        winner: isDraw ? 0 : winningPlayerNumber,
-                        winnerUsername: isDraw ? 'DRAW' : winnerUsername,
-                        matchReason: reason,
-                        status: 'finished',
-                        p1Score: newScores.p1Score,
-                        p2Score: newScores.p2Score,
-                        roundsPlayed: newRoundsPlayed,
-                        // Skip the manual rematch request/accept step and go
-                        // straight into the next round automatically.
-                        rematchAccepted: true,
-                        // Timestamp both clients' room listeners watch to trigger
-                        // the synchronized win/score black-screen transition.
-                        winnerAnnouncedAt: Date.now()
-                    });
-                } else if (isAbandonment) {
-                    // The opponent disconnected — end the match right away with
-                    // this round's own winner instead of a best-of-3 comparison.
-                    await window.firebaseUpdate(roomRef, {
-                        winner: isDraw ? 0 : winningPlayerNumber,
+                        winner: seriesWinnerPlayerNumber,
                         winnerUsername: finalWinnerUsername,
                         matchReason: reason,
                         status: 'finished',
                         p1Score: newScores.p1Score,
                         p2Score: newScores.p2Score,
                         roundsPlayed: newRoundsPlayed,
-                        // Marks this as a final result so both clients' room
-                        // listeners know to show the winner page immediately.
+                        // Marks this as the final result of the series so both
+                        // clients' room listeners know to show the winner page
+                        // instead of continuing into another round.
                         seriesOver: true,
-                        // Timestamp both clients' room listeners watch to trigger
-                        // the synchronized win/score black-screen transition.
+                        // Timestamp both clients' room listeners watch to know
+                        // a result was just announced.
                         winnerAnnouncedAt: Date.now()
                     });
                 } else {
-                    // A player's score has just reached 3 — decide the overall
-                    // best-of-3 winner by comparing total round wins.
-                    const p1Username = myPlayerNumber === 1 ? player1Username : opponentUsername;
-                    const p2Username = myPlayerNumber === 2 ? player1Username : opponentUsername;
-                    let matchWinningPlayerNumber = 0;
-                    if (newScores.p1Score > newScores.p2Score) matchWinningPlayerNumber = 1;
-                    else if (newScores.p2Score > newScores.p1Score) matchWinningPlayerNumber = 2;
-                    const matchIsDraw = matchWinningPlayerNumber === 0;
-                    finalWinnerUsername = matchIsDraw ? 'DRAW' : (matchWinningPlayerNumber === 1 ? p1Username : p2Username);
+                    // ── Intermediate round: show the round-winner banner on
+                    // both clients, then automatically deal out the next round
+                    // for host and joiner alike after a fixed 3-second pause —
+                    // no rematch prompt, no manual accept/decline. ──
+                    bannerWinnerUsername = isDraw ? 'DRAW' : winnerUsername;
+                    showRoundWinnerBanner = true;
 
                     await window.firebaseUpdate(roomRef, {
-                        winner: matchWinningPlayerNumber,
-                        winnerUsername: finalWinnerUsername,
+                        winner: isDraw ? 0 : winningPlayerNumber,
+                        winnerUsername: bannerWinnerUsername,
                         matchReason: reason,
                         status: 'finished',
                         p1Score: newScores.p1Score,
                         p2Score: newScores.p2Score,
                         roundsPlayed: newRoundsPlayed,
-                        // Marks this as a final result so both clients' room
-                        // listeners know to show the winner page immediately.
-                        seriesOver: true,
-                        // Timestamp both clients' room listeners watch to trigger
-                        // the synchronized win/score black-screen transition.
+                        seriesOver: false,
                         winnerAnnouncedAt: Date.now()
                     });
-                }
-            } else {
-                // Lost the lock race — the other client is already applying this
-                // round's update. Don't show a local winner screen from here;
-                // let the room listener pick up the result instead.
-                showFinalWinnerScreen = false;
-            }
-        }
 
-        // For online multiplayer matches, both clients' room listeners pick up
-        // the `winnerAnnouncedAt` timestamp written above and trigger the
-        // synchronized black-screen transition together. For matches with no
-        // room context (e.g. vs AI practice matches), there is no Firebase
-        // round-trip to drive that, so trigger it directly here instead.
-        if (!currentRoomId) {
-            triggerWinTransitionScreen(finalWinnerUsername);
+                    // Only the client that won the round-lock transaction
+                    // schedules the next round, so exactly one client performs
+                    // the Firebase write that deals it out — the other client
+                    // picks up the fresh round via its own room listener.
+                    setTimeout(() => {
+                        proceedToNextRound();
+                    }, 3000);
+                }
+            }
+            // If the lock was lost, the other client is already applying this
+            // round's update — leave showFinalWinnerScreen/showRoundWinnerBanner
+            // both false here and let the room listener pick up the result.
         }
 
         setTimeout(() => {
             if (showFinalWinnerScreen) {
                 gameScreenEl.style.display = 'none';
                 showWinnerScreen(finalWinnerUsername, reason);
+            } else if (showRoundWinnerBanner) {
+                gameScreenEl.style.display = 'none';
+                showRoundWinnerScreen(bannerWinnerUsername);
             }
-            // For rounds 1 and 2, resetForRematch() — triggered automatically
-            // by the rematchAccepted flag above via the room listener —
-            // clears the fade-out and restarts the board without needing
-            // the winner screen to appear at all.
         }, 300);
     }
 
@@ -6395,20 +6266,6 @@
             // ── OPTIMIZATION: batch render + indicator into single call path ──
             render();
             updateSpectatorTurnIndicator();
-
-            // ── Synchronized win/score black-screen transition for spectators
-            // watching the match, mirroring the players' own transition. ──
-            if (!spectatorWinTransitionBaselineCaptured) {
-                spectatorWinTransitionBaselineCaptured = true;
-                lastSpectatorWinTransitionTs = data.winnerAnnouncedAt || 0;
-            } else if (data.winnerAnnouncedAt && data.winnerAnnouncedAt !== lastSpectatorWinTransitionTs) {
-                lastSpectatorWinTransitionTs = data.winnerAnnouncedAt;
-                // Skip the slide-in transition once a player's score has reached
-                // 3 (seriesOver) — go straight to the winner page instead.
-                if (!data.seriesOver) {
-                    triggerWinTransitionScreen(data.winnerUsername);
-                }
-            }
 
             if (data.winner !== undefined && data.winnerUsername && data.seriesOver) {
                 showWinnerScreen(data.winnerUsername, data.matchReason || '');
@@ -6836,11 +6693,6 @@
     function startListeningToRoom(roomId) {
         if (isListeningToRoom) return;
         isListeningToRoom = true;
-        // Reset win-transition tracking for this room so a stale
-        // winnerAnnouncedAt value from before a reconnect doesn't
-        // incorrectly re-trigger the transition on the very first snapshot.
-        winTransitionBaselineCaptured = false;
-        lastWinTransitionTs = 0;
         const roomRef = window.firebaseRef(window.firebaseDB, 'rooms/' + roomId);
 
         roomListener = window.firebaseOnValue(roomRef, (snapshot) => {
@@ -6877,6 +6729,17 @@
                 syncGameStateFromFirebase(data);
             }
 
+            // ── Automatic round-to-round transition: proceedToNextRound()
+            // stamps a fresh roundStartAt timestamp whenever the next round of
+            // the 3-round series is dealt out. Both host and joiner react to
+            // it here — regardless of which one of them actually wrote it —
+            // by hiding the round-winner banner and re-arming local match
+            // state for the new round. ──
+            if (hasGameStarted && typeof data.roundStartAt === 'number' && data.roundStartAt !== lastSeenRoundStartAt) {
+                lastSeenRoundStartAt = data.roundStartAt;
+                beginNextRoundLocally();
+            }
+
             // ── Disconnect / presence handling: watch the opponent's connection
             // flag. The moment it flips to false, the match ends immediately —
             // with zero delay — there is no grace period. ──
@@ -6885,26 +6748,13 @@
                 handleOpponentPresence(opponentConnected);
             }
 
-            // ── Synchronized win/score black-screen transition: fires for
-            // every round win/score, not just the final series winner, since
-            // both clients receive this same `winnerAnnouncedAt` write via
-            // their room listener at essentially the same time. The first
-            // snapshot after (re)connecting only captures a baseline instead
-            // of triggering, so a stale/previous value never re-fires it. ──
-            if (!winTransitionBaselineCaptured) {
-                winTransitionBaselineCaptured = true;
-                lastWinTransitionTs = data.winnerAnnouncedAt || 0;
-            } else if (data.winnerAnnouncedAt && data.winnerAnnouncedAt !== lastWinTransitionTs) {
-                lastWinTransitionTs = data.winnerAnnouncedAt;
-                // Skip the slide-in transition once a player's score has reached
-                // 3 (seriesOver) — go straight to the winner page instead.
-                if (!data.seriesOver) {
-                    triggerWinTransitionScreen(data.winnerUsername);
-                }
-            }
-
             if (data.winner !== undefined && data.winnerUsername && data.seriesOver) {
                 showWinnerScreen(data.winnerUsername, data.matchReason || '');
+            } else if (data.winner !== undefined && data.winnerUsername && !data.seriesOver && data.status === 'finished') {
+                // Intermediate round of the series: show the brief per-round
+                // winner banner instead of the final winner page — the match
+                // continues automatically once proceedToNextRound() fires.
+                showRoundWinnerScreen(data.winnerUsername);
             }
 
             if (data.rematchRequest && data.rematchRequest.from !== myPlayerNumber) {
@@ -6979,10 +6829,6 @@
         // remaining client reaches this code path in practice, so a direct
         // single save is safe here.
         await saveGameHistory(winnerUsername, opponentUsername, 'Opponent Disconnected', playerIPAddress, opponentIPAddress, false);
-        // The room node no longer exists, so there is no shared Firebase
-        // write for the other client's listener to react to here — trigger
-        // the transition locally for this remaining client.
-        triggerWinTransitionScreen(winnerUsername);
         setTimeout(() => {
             gameScreenEl.style.display = 'none';
             showWinnerScreen(winnerUsername, 'Opponent Disconnected');
@@ -7827,6 +7673,7 @@
     async function resetForRematch() {
         winnerScreenEl.classList.remove('show');
         winnerScreenShown = false; // BUGFIX: re-arm the duplicate-slide guard for the next win
+        roundWinnerScreenShown = false; // Re-arm the per-round banner guard for the new series
         gameEnded = false;
         // Clear any leftover real-time inactivity deadline from the previous
         // match so the rematch always starts with a fresh 30-second timer.
@@ -7870,22 +7717,20 @@
                 historyRecorded: false,
                 // Re-arm the round-lock for the new round so the next round's
                 // ending (checkmate, surrender, etc.) can be locked again.
-                roundLocked: false
-                // Note: p1Score/p2Score are intentionally NOT reset here so the match score
-                // is preserved across rematches within the same best-of-3 series.
+                roundLocked: false,
+                // This "Rematch" button only ever appears on the final winner
+                // page, once the whole 3-round series is over, so every
+                // rematch here always starts a brand-new 3-round series —
+                // scores and round count always reset instead of carrying
+                // over from the previous series.
+                roundsPlayed: 0,
+                p1Score: 0,
+                p2Score: 0
             };
 
-            // A full best-of-3 series just finished (someone's score reached
-            // 3) — start the next series fresh instead of carrying the
-            // finished series' round count and scores into it.
-            if (myScore >= 3 || opponentScore >= 3) {
-                roundsPlayed = 0;
-                myScore = 0;
-                opponentScore = 0;
-                update.roundsPlayed = 0;
-                update.p1Score = 0;
-                update.p2Score = 0;
-            }
+            roundsPlayed = 0;
+            myScore = 0;
+            opponentScore = 0;
 
             await window.firebaseUpdate(roomRef, update);
         }
@@ -7927,34 +7772,6 @@
         }
         element.style.fontSize = lo + 'px';
         element.style.letterSpacing = (lo * 0.1) + 'px';
-    }
-
-    // ── Synchronized win/score black-screen transition ──────────────────
-    // Shows a full-screen opaque black overlay (above everything else,
-    // including the winner screen) for 3.5 seconds whenever a player wins
-    // or scores. The winner's username slides in from the left and
-    // "WINNER" slides in from the right, both centered, complete their
-    // animation within 3.4s, then fade out just before the overlay itself
-    // is removed at the 3.5s mark. Because it simply sits on top, whatever
-    // the existing game logic is doing underneath (score updates, round
-    // resets, showing the final winner screen, etc.) continues completely
-    // unchanged and is just visually hidden until the transition ends.
-    function triggerWinTransitionScreen(winnerUsername) {
-        if (!winTransitionOverlayEl) return;
-        winTransitionUsernameEl.textContent = winnerUsername || '';
-
-        // Restart the CSS animations even if the overlay is already showing
-        // (e.g. back-to-back rounds) by toggling the class off/on with a
-        // forced reflow in between.
-        winTransitionOverlayEl.classList.remove('show');
-        void winTransitionOverlayEl.offsetWidth;
-        winTransitionOverlayEl.classList.add('show');
-
-        if (winTransitionHideTimer) clearTimeout(winTransitionHideTimer);
-        winTransitionHideTimer = setTimeout(() => {
-            winTransitionOverlayEl.classList.remove('show');
-            winTransitionHideTimer = null;
-        }, 3500);
     }
 
     function showWinnerScreen(winnerUsername, reason) {
@@ -8009,6 +7826,111 @@
             adjustUsernameSize(winnerUsernameEl);
             createConfetti();
         }, 50);
+    }
+
+    // ── Shows the brief winner banner for a single round within the
+    // 3-round series: the winning player's username slides in from the
+    // left while "WINNER" slides in from the right (see the CSS
+    // #winner-screen animations). No rematch/main-menu buttons are shown,
+    // since the series continues automatically. The banner stays up for
+    // 3 seconds, after which proceedToNextRound() (scheduled separately by
+    // the client that won the round-lock transaction) deals out the next
+    // round and beginNextRoundLocally() hides this banner again. ──
+    function showRoundWinnerScreen(winnerUsername) {
+        // Same duplicate-call guard pattern as showWinnerScreen(): this can be
+        // reached twice for the same round end (once directly, once via this
+        // client's own Firebase write echoing back through the room
+        // listener). Bail out on the repeat call instead of replaying the
+        // slide-in animation twice.
+        if (roundWinnerScreenShown) return;
+        roundWinnerScreenShown = true;
+
+        stopInactivityTimer();
+        const trophyEl = document.querySelector('.trophy-icon');
+        const labelEl = document.querySelector('.winner-label');
+        const buttonsEl = document.querySelector('.winner-buttons');
+        const spectatorButtonsEl = document.getElementById('spectator-winner-buttons');
+
+        trophyEl.style.display = winnerUsername === 'DRAW' ? 'none' : 'block';
+        labelEl.style.display = winnerUsername === 'DRAW' ? 'none' : 'block';
+        winnerUsernameEl.textContent = winnerUsername;
+        if (winnerReasonEl) winnerReasonEl.textContent = '';
+
+        // No rematch/main-menu buttons for a round win — the series
+        // continues automatically.
+        buttonsEl.style.display = 'none';
+        if (spectatorButtonsEl) spectatorButtonsEl.style.display = 'none';
+
+        winnerScreenEl.classList.add('show');
+
+        setTimeout(() => {
+            adjustUsernameSize(winnerUsernameEl);
+            createConfetti();
+        }, 50);
+    }
+
+    // ── Deals out the next round of the current 3-round series: resets the
+    // board and turn on Firebase (host and joiner both pick this up through
+    // their normal room listener), while leaving p1Score/p2Score/roundsPlayed
+    // untouched so they keep carrying over across rounds. Only ever called by
+    // the single client that won the round-lock transaction for the round
+    // that just ended, so exactly one client performs this write. ──
+    async function proceedToNextRound() {
+        if (!currentRoomId) return;
+
+        const initialBoard = [
+            [0,1,0,1,0,1,0,1],
+            [1,0,1,0,1,0,1,0],
+            [0,1,0,1,0,1,0,1],
+            [0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0],
+            [2,0,2,0,2,0,2,0],
+            [0,2,0,2,0,2,0,2],
+            [2,0,2,0,2,0,2,0]
+        ];
+
+        const roomRef = window.firebaseRef(window.firebaseDB, 'rooms/' + currentRoomId);
+        await window.firebaseUpdate(roomRef, {
+            boardState: initialBoard,
+            currentTurn: randomStartingTurn(),
+            multiJumpingPiece: null,
+            winner: null,
+            winnerUsername: null,
+            matchReason: null,
+            status: 'playing',
+            roundLocked: false,
+            historyRecorded: false,
+            gameStartTime: Date.now(),
+            // Timestamp both clients' room listeners watch to know the next
+            // round of the series has just been dealt out.
+            roundStartAt: Date.now()
+        });
+    }
+
+    // ── Called on BOTH clients (host and joiner) the moment a fresh
+    // roundStartAt timestamp arrives from proceedToNextRound(): hides the
+    // round-winner banner and re-arms local match state for the new round,
+    // exactly like resetForRematch() does for a brand-new series, but
+    // without touching p1Score/p2Score/roundsPlayed since those persist
+    // across rounds within the same series. ──
+    function beginNextRoundLocally() {
+        winnerScreenEl.classList.remove('show');
+        winnerScreenShown = false;
+        roundWinnerScreenShown = false;
+        gameEnded = false;
+        currentInactivityEndTime = null;
+        clearInactivityEndTime();
+        selectedPiece = null;
+        currentValidMoves = [];
+
+        gameScreenEl.classList.remove('fade-out');
+        gameScreenEl.style.display = 'flex';
+        gameStartTime = Date.now();
+        showRoomIdCorner(currentRoomId);
+        updateRoundScoreDisplay();
+        render();
+        updateTurnIndicator();
+        startInactivityTimer();
     }
 
     function openChat() {
@@ -8104,6 +8026,16 @@
         if (typeof data.p1Score === 'number' && typeof data.p2Score === 'number') {
             myScore = myPlayerNumber === 1 ? data.p1Score : data.p2Score;
             opponentScore = myPlayerNumber === 1 ? data.p2Score : data.p1Score;
+        }
+
+        if (typeof data.roundsPlayed === 'number') {
+            roundsPlayed = data.roundsPlayed;
+        }
+        // Mark whatever roundStartAt is already on the room as seen, so the
+        // room listener doesn't mistake it for a brand-new round transition
+        // right after reconnecting.
+        if (typeof data.roundStartAt === 'number') {
+            lastSeenRoundStartAt = data.roundStartAt;
         }
 
         // Restore our own connected presence flag and re-arm onDisconnect, since
