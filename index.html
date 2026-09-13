@@ -713,7 +713,7 @@
         justify-content: center;
         z-index: 10;
         opacity: 1;
-        transition: opacity 0.3s ease;
+        transition: none;
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
     }
@@ -1777,18 +1777,18 @@
     }
 
     #main-menu-btn {
-        background: none;
-        border: none;
-        padding: 0;
-        border-radius: 0;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid #FFFFFF;
+        padding: 14px 32px;
+        border-radius: 12px;
         width: auto;
         align-self: center;
         touch-action: manipulation;
     }
 
     #main-menu-btn:hover {
-        background: none;
-        color: #ffffff;
+        background: #ffffff;
+        color: #000000;
     }
 
     #rematch-btn {
@@ -4233,7 +4233,6 @@
         <div class="winner-label">WINNER</div>
         <div class="winner-reason" id="winner-reason"></div>
         <div class="winner-buttons">
-            <button class="winner-btn" id="rematch-btn" onclick="requestRematch()">REMATCH</button>
             <button class="winner-btn secondary" id="main-menu-btn" onclick="goToMainMenu()">MAIN MENU</button>
         </div>
         <div class="winner-buttons" id="spectator-winner-buttons" style="display: none;">
@@ -6111,7 +6110,7 @@
                     // picks up the fresh round via its own room listener.
                     setTimeout(() => {
                         proceedToNextRound();
-                    }, 1000);
+                    }, 2000);
                 }
             }
             // If the lock was lost, the other client is already applying this
@@ -6119,15 +6118,13 @@
             // both false here and let the room listener pick up the result.
         }
 
-        setTimeout(() => {
-            if (showFinalWinnerScreen) {
-                gameScreenEl.style.display = 'none';
-                showWinnerScreen(finalWinnerUsername, reason);
-            } else if (showRoundWinnerBanner) {
-                gameScreenEl.style.display = 'none';
-                showRoundWinnerScreen(bannerWinnerUsername);
-            }
-        }, 300);
+        if (showFinalWinnerScreen) {
+            gameScreenEl.style.display = 'none';
+            showWinnerScreen(finalWinnerUsername, reason);
+        } else if (showRoundWinnerBanner) {
+            gameScreenEl.style.display = 'none';
+            showRoundWinnerScreen(bannerWinnerUsername);
+        }
     }
 
     function spectateGame() {
@@ -6831,10 +6828,8 @@
         // remaining client reaches this code path in practice, so a direct
         // single save is safe here.
         await saveGameHistory(winnerUsername, opponentUsername, 'Opponent Disconnected', playerIPAddress, opponentIPAddress, false);
-        setTimeout(() => {
-            gameScreenEl.style.display = 'none';
-            showWinnerScreen(winnerUsername, 'Opponent Disconnected');
-        }, 300);
+        gameScreenEl.style.display = 'none';
+        showWinnerScreen(winnerUsername, 'Opponent Disconnected');
     }
 
     // ── OPTIMIZATION: batch all Firebase-driven state updates; single render call ──
