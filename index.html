@@ -1005,6 +1005,267 @@
   .historyLoss { color: #ff4d4d; text-align: left; overflow-wrap: anywhere; min-width: 0; }
   .historyVs { color: #8a8a8a; font-size: 0.8rem; font-weight: 400; text-align: center; }
   .historyEmpty { color: #8a8a8a; text-align: center; padding-top: 24px; }
+  .historyItem { display: flex; flex-direction: column; gap: 6px; }
+  .historyRow { cursor: pointer; }
+  .historyRow.active { box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 0 0 1px #d8b184; }
+  .historyDetails {
+    display: none;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #141414;
+    border: 1px solid #2b2b2b;
+    border-radius: 12px;
+    font-family: sans-serif;
+    text-align: center;
+  }
+  .historyDetails.open { display: grid; }
+  .historyDetailLabel {
+    color: #8a8a8a;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .historyDetailValue { color: #d8b184; font-size: 1.05rem; font-weight: 700; }
+  #leaderboardBubble {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #f0c98a, #d8b184);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    transition: transform 0.15s ease;
+  }
+  #leaderboardBubble:active { transform: scale(0.92); }
+  #leaderboardTrophy {
+    filter: drop-shadow(1.5px 0 0 #000) drop-shadow(-1.5px 0 0 #000) drop-shadow(0 1.5px 0 #000) drop-shadow(0 -1.5px 0 #000);
+  }
+  #leaderboardPage {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    height: 100dvh;
+    background: radial-gradient(circle at 50% 0%, #1f1a12 0%, #0d0d0d 60%);
+    display: none;
+    flex-direction: column;
+    z-index: 120;
+  }
+  #leaderboardPage.open { display: flex; }
+  #leaderboardPageHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    background: linear-gradient(180deg, #232323, #181818);
+    border-bottom: 1px solid #d8b184;
+    color: #f0c98a;
+    font-family: sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  }
+  #leaderboardPageBack {
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+    background: #2b2b2b;
+  }
+  #leaderboardList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 16px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: min(560px, 100%);
+    margin: 0 auto;
+    font-family: sans-serif;
+  }
+  .leaderRow {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: linear-gradient(145deg, #1f1f1f, #171717);
+    border: 1px solid #2b2b2b;
+    border-radius: 14px;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
+  .leaderBadge {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #8a8a8a;
+    background: #262626;
+    box-shadow: inset 0 0 0 1px #3a3a3a;
+  }
+  .leaderInfo { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .leaderName { font-weight: 700; font-size: 1.05rem; overflow-wrap: anywhere; }
+  .leaderRecord { display: flex; gap: 10px; font-size: 0.8rem; font-weight: 700; }
+  .leaderWins { color: #2ecc71; }
+  .leaderLosses { color: #ff4d4d; }
+  .leaderScore { text-align: right; }
+  .leaderScoreValue { font-size: 1.5rem; font-weight: 700; color: #d8b184; line-height: 1; }
+  .leaderScoreLabel { font-size: 0.6rem; letter-spacing: 1.5px; color: #8a8a8a; margin-top: 4px; }
+
+  .leaderRow.rank1 {
+    padding: 18px 16px;
+    background: linear-gradient(145deg, #3a2f12, #1c1708);
+    border-color: #f5d76e;
+    box-shadow: 0 4px 14px rgba(245,215,110,0.25);
+  }
+  .leaderRow.rank1 .leaderBadge { width: 42px; height: 42px; font-size: 1.1rem; color: #3a2a00; background: linear-gradient(145deg, #fff0a8, #d4a017); box-shadow: 0 0 12px rgba(245,215,110,0.6); }
+  .leaderRow.rank1 .leaderName { font-size: 1.2rem; color: #ffe27a; }
+  .leaderRow.rank1 .leaderScoreValue { font-size: 1.8rem; color: #ffe27a; }
+
+  .leaderRow.rank2 {
+    background: linear-gradient(145deg, #2c2e30, #1a1b1c);
+    border-color: #c4c9cf;
+    box-shadow: 0 3px 10px rgba(196,201,207,0.18);
+  }
+  .leaderRow.rank2 .leaderBadge { color: #22262a; background: linear-gradient(145deg, #f2f4f6, #9aa0a6); box-shadow: 0 0 10px rgba(196,201,207,0.45); }
+  .leaderRow.rank2 .leaderName { color: #e6e9ec; }
+  .leaderRow.rank2 .leaderScoreValue { color: #e6e9ec; }
+
+  .leaderRow.rank3 {
+    background: linear-gradient(145deg, #33241a, #1b130d);
+    border-color: #cd8b55;
+    box-shadow: 0 3px 10px rgba(205,139,85,0.2);
+  }
+  .leaderRow.rank3 .leaderBadge { color: #2e1808; background: linear-gradient(145deg, #f0b78a, #a8683a); box-shadow: 0 0 10px rgba(205,139,85,0.5); }
+  .leaderRow.rank3 .leaderName { color: #f0b78a; }
+  .leaderRow.rank3 .leaderScoreValue { color: #f0b78a; }
+
+  /* ---- Leaderboard rank badge entrance animations (1st / 2nd / 3rd) ---- */
+  .badgeWrap { position: relative; display: flex; align-items: center; }
+  .badgeFx {
+    --R: 19px;
+    position: absolute; left: 0; top: 50%;
+    width: 36px; height: 36px; margin-top: -18px;
+    pointer-events: none;
+  }
+  .leaderRow.rank1 .badgeFx { width: 42px; height: 42px; margin-top: -21px; --R: 21px; }
+  .badgeFx::before, .badgeFx::after { content: ''; position: absolute; inset: 0; border-radius: 50%; opacity: 0; }
+
+  /* 1st: golden vortex -> burst -> gold badge + left-to-right sheen */
+  .leaderRow.rank1 .leaderBadge { animation: goldBadge 1.7s both; }
+  @keyframes goldBadge {
+    0%, 60% { opacity: 0; transform: scale(0.2); }
+    70% { opacity: 1; transform: scale(1.35); filter: brightness(1.8); }
+    85% { opacity: 1; transform: scale(0.95); filter: brightness(1.2); }
+    100% { opacity: 1; transform: scale(1); filter: none; }
+  }
+  .fxVortex {
+    position: absolute; left: 50%; top: 50%; width: 0; height: 0;
+    animation: vortexSpin 1.1s cubic-bezier(0.5, 0, 0.9, 0.6) both;
+  }
+  @keyframes vortexSpin { from { transform: rotate(0deg); } to { transform: rotate(300deg); } }
+  .fxP {
+    position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%;
+    background: #ffe27a; box-shadow: 0 0 6px 2px rgba(255,226,122,0.9);
+    animation: vortexIn 1.1s ease-in both; animation-delay: var(--d);
+  }
+  @keyframes vortexIn {
+    0% { opacity: 0; transform: rotate(var(--a)) translateX(34px) scale(1); }
+    15% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { opacity: 0; transform: rotate(var(--a)) translateX(0) scale(0.3); }
+  }
+  .leaderRow.rank1 .badgeFx::before { border: 2px solid #fff0a8; animation: goldBurst 1.7s both; }
+  @keyframes goldBurst {
+    0%, 62% { opacity: 0; transform: scale(1); }
+    66% { opacity: 1; }
+    100% { opacity: 0; transform: scale(2.6); }
+  }
+  .leaderRow.rank1 .badgeFx::after {
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.9) 50%, transparent 65%);
+    background-size: 250% 100%; background-repeat: no-repeat; background-position: 100% 0;
+    animation: goldSheen 0.8s ease-in-out 1.75s both;
+  }
+  @keyframes goldSheen {
+    0% { opacity: 1; background-position: 100% 0; }
+    90% { opacity: 1; }
+    100% { opacity: 0; background-position: 0% 0; }
+  }
+
+  /* 2nd: silver streaks snap in from N/E/S/W -> circular outline */
+  .leaderRow.rank2 .leaderBadge { animation: silverBadge 1.1s both; }
+  @keyframes silverBadge {
+    0%, 45% { opacity: 0; transform: scale(0.9); }
+    70%, 100% { opacity: 1; transform: scale(1); }
+  }
+  .fxStreak {
+    position: absolute; left: 50%; top: 50%; width: 14px; height: 2px; margin: -1px 0 0 -7px;
+    border-radius: 2px; background: linear-gradient(90deg, #f2f4f6, transparent);
+    box-shadow: 0 0 6px #c4c9cf;
+    animation: streakIn 0.6s cubic-bezier(0.2, 0.9, 0.1, 1) both;
+  }
+  @keyframes streakIn {
+    0% { opacity: 0; transform: rotate(var(--a)) translateX(42px); }
+    20% { opacity: 1; }
+    70% { opacity: 1; transform: rotate(var(--a)) translateX(24px); }
+    100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--R)) scaleX(0.4); }
+  }
+  .leaderRow.rank2 .badgeFx::before { border: 2px solid #f2f4f6; box-shadow: 0 0 8px rgba(196,201,207,0.7); animation: silverRing 1.1s both; }
+  @keyframes silverRing {
+    0%, 35% { opacity: 0; transform: scale(1.3); }
+    50% { opacity: 1; transform: scale(1); }
+    85% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1); }
+  }
+
+  /* 3rd: bronze sparks form a circular outline and seal with a quick flash */
+  .leaderRow.rank3 .leaderBadge { animation: bronzeBadge 1.3s both; }
+  @keyframes bronzeBadge {
+    0%, 62% { opacity: 0; transform: scale(0.7); }
+    70% { opacity: 1; transform: scale(1.15); filter: brightness(1.8); }
+    100% { opacity: 1; transform: scale(1); filter: none; }
+  }
+  .fxSpark {
+    position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px;
+    border-radius: 50%; background: #f0b78a; box-shadow: 0 0 6px 2px rgba(205,139,85,0.9);
+    animation: sparkIn 0.3s ease-out both, sparkOut 0.2s ease-in 0.85s forwards;
+    animation-delay: calc(var(--i) * 0.06s), 0.85s;
+  }
+  @keyframes sparkIn {
+    0% { opacity: 0; transform: rotate(var(--a)) translateX(var(--R)) scale(0); }
+    100% { opacity: 1; transform: rotate(var(--a)) translateX(var(--R)) scale(1); }
+  }
+  @keyframes sparkOut {
+    to { opacity: 0; transform: rotate(var(--a)) translateX(var(--R)) scale(1.6); }
+  }
+  .leaderRow.rank3 .badgeFx::before { border: 2px solid #ffd2a8; animation: bronzeSeal 1.3s both; }
+  @keyframes bronzeSeal {
+    0%, 60% { opacity: 0; transform: scale(1); box-shadow: none; }
+    66% { opacity: 1; transform: scale(1); box-shadow: 0 0 14px 6px rgba(240,183,138,0.9); }
+    80% { opacity: 1; transform: scale(1.25); box-shadow: 0 0 14px 6px rgba(240,183,138,0.6); }
+    100% { opacity: 0; transform: scale(1.6); box-shadow: none; }
+  }
 </style>
 </head>
 <body>
@@ -1024,6 +1285,7 @@
     <div id="landingTitle">Dama King</div>
     <button id="playButton" disabled>Play</button>
   </div>
+  <div id="leaderboardBubble"><span id="leaderboardTrophy">🏆</span></div>
 </div>
 <div id="modeScreen">
   <div id="modeButtons">
@@ -1116,7 +1378,7 @@
      left/{uid}       true
      usernames/{key}  {uid, name, online, t}     <- unique username claims
      ping/{uid}       number                     <- RTT probe
-     history/{key}    {winner, loser, t}         <- finished online matches (admin dashboard)
+     history/{key}    {winner, loser, t, startedAt} <- finished online matches (admin dashboard)
 
    ROLES     host = black (moves first), guest = gray. Guest's board is
              rotated 180 degrees so every player sees their pieces at the bottom.
@@ -1193,7 +1455,7 @@
        "history": {
          "$key": {
            ".read": "auth != null",
-           ".write": "auth != null && !data.exists() && newData.exists()",
+           ".write": "auth != null && (!data.exists() || !data.child('startedAt').exists()) && newData.exists()",
            ".validate": "newData.hasChildren(['winner','loser','t'])"
          }
        },
@@ -1227,6 +1489,7 @@
   let turnSteps = [];        // steps of my turn in progress
   let localMoveNo = -1;      // last move number applied locally
   let gameNo = 0;            // increments on every rematch
+  let gameStartMs = null;    // server time the current game started (for history)
   let turnStartedAtSrv = 0;  // server-time start of the current turn
   const ANIM_DURATION = 1.4;
   const animStart = Date.now();
@@ -2735,6 +2998,7 @@
 
   function startFresh(s){
     gameNo = s.gameNo;
+    gameStartMs = s.moveNo === 0 ? effectiveStart(s) : ((s.gameNo === 1 && roomMeta && roomMeta.startedAt) || null);
     gameOver = false;
     rematchPending = false; rematchStarting = false; rematchIncoming = false; lastRematch = {};
     winnerScreen.classList.remove('open');
@@ -2833,7 +3097,12 @@
       const key = roomId + '_' + (roomMeta.createdAt || 0) + '_' + (s.gameNo || 0);
       const w = s.winner === 'black' ? hostN : guestN;
       const l = s.winner === 'black' ? guestN : hostN;
-      db.ref('history/' + key).transaction(cur => cur ? undefined : {winner: w, loser: l, t: firebase.database.ServerValue.TIMESTAMP}).catch(() => {});
+      const st = gameStartMs || (s.gameNo === 1 && roomMeta.startedAt) || null;
+      db.ref('history/' + key).transaction(cur => {
+        if (!cur) return {winner: w, loser: l, t: firebase.database.ServerValue.TIMESTAMP, startedAt: st};
+        if (!cur.startedAt && st){ cur.startedAt = st; return cur; }
+        return undefined;
+      }).catch(() => {});
     } catch(e){}
   }
 
@@ -2995,6 +3264,13 @@
     </div>
   </div>
 </div>
+<div id="leaderboardPage">
+  <div id="leaderboardPageHeader">
+    <span>LEADERBOARD</span>
+    <span id="leaderboardPageBack">✕</span>
+  </div>
+  <div id="leaderboardList"></div>
+</div>
 <div id="historyPage">
   <div id="historyPageHeader">
     <span>HISTORY</span>
@@ -3040,6 +3316,8 @@
       if (!rows.length){ historyMsg('No history yet'); return; }
       historyList.innerHTML = '';
       rows.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'historyItem';
         const row = document.createElement('div');
         row.className = 'historyRow';
         const w = document.createElement('span');
@@ -3052,11 +3330,117 @@
         l.className = 'historyLoss';
         l.textContent = r.loser;
         row.appendChild(w); row.appendChild(vs); row.appendChild(l);
-        historyList.appendChild(row);
+
+        const pad = n => (n < 10 ? '0' : '') + n;
+        const when = r.startedAt || r.t;
+        let dateText = '—', timeText = '—';
+        if (when){
+          const dt = new Date(when);
+          dateText = pad(dt.getDate()) + '/' + pad(dt.getMonth() + 1) + '/' + dt.getFullYear();
+        }
+        if (r.startedAt){
+          const st = new Date(r.startedAt);
+          const h = st.getHours();
+          timeText = ((h % 12) || 12) + ':' + pad(st.getMinutes()) + ' ' + (h >= 12 ? 'PM' : 'AM');
+        }
+        const details = document.createElement('div');
+        details.className = 'historyDetails';
+        [['Date Played', dateText], ['Game Start Time', timeText]].forEach(p => {
+          const cell = document.createElement('div');
+          const lab = document.createElement('div');
+          lab.className = 'historyDetailLabel';
+          lab.textContent = p[0];
+          const val = document.createElement('div');
+          val.className = 'historyDetailValue';
+          val.textContent = p[1];
+          cell.appendChild(lab); cell.appendChild(val);
+          details.appendChild(cell);
+        });
+        row.addEventListener('click', () => {
+          const open = details.classList.toggle('open');
+          row.classList.toggle('active', open);
+        });
+        item.appendChild(row); item.appendChild(details);
+        historyList.appendChild(item);
       });
     });
   });
   document.getElementById('historyPageBack').addEventListener('click', () => historyPage.classList.remove('open'));
+  const leaderboardPage = document.getElementById('leaderboardPage');
+  const leaderboardList = document.getElementById('leaderboardList');
+  function leaderboardMsg(text){
+    leaderboardList.innerHTML = '';
+    const m = document.createElement('div');
+    m.className = 'historyEmpty';
+    m.textContent = text;
+    leaderboardList.appendChild(m);
+  }
+  document.getElementById('leaderboardBubble').addEventListener('click', () => {
+    leaderboardPage.classList.add('open');
+    leaderboardMsg('Loading...');
+    if (!window.dkLoadHistory){ leaderboardMsg('Leaderboard unavailable'); return; }
+    window.dkLoadHistory(rows => {
+      if (!rows){ leaderboardMsg('Leaderboard unavailable'); return; }
+      if (!rows.length){ leaderboardMsg('No matches yet'); return; }
+      const stats = {};
+      rows.forEach(r => {
+        if (!stats[r.winner]) stats[r.winner] = {name: r.winner, w: 0, l: 0};
+        if (!stats[r.loser]) stats[r.loser] = {name: r.loser, w: 0, l: 0};
+        stats[r.winner].w++;
+        stats[r.loser].l++;
+      });
+      // score = number of wins; highest score first (ties: fewer losses, then name)
+      const list = Object.values(stats).sort((a, b) => (b.w - a.w) || (a.l - b.l) || a.name.localeCompare(b.name));
+      const el = (tag, cls, text) => {
+        const n = document.createElement(tag);
+        n.className = cls;
+        if (text !== undefined) n.textContent = text;
+        return n;
+      };
+      leaderboardList.innerHTML = '';
+      list.forEach((p, i) => {
+        const row = el('div', 'leaderRow' + (i < 3 ? ' rank' + (i + 1) : ''));
+        const info = el('div', 'leaderInfo');
+        const record = el('div', 'leaderRecord');
+        record.appendChild(el('span', 'leaderWins', 'W ' + p.w));
+        record.appendChild(el('span', 'leaderLosses', 'L ' + p.l));
+        info.appendChild(el('div', 'leaderName', p.name));
+        info.appendChild(record);
+        const score = el('div', 'leaderScore');
+        score.appendChild(el('div', 'leaderScoreValue', p.w));
+        score.appendChild(el('div', 'leaderScoreLabel', 'SCORE'));
+        const badge = el('div', 'leaderBadge', i + 1);
+        if (i < 3){
+          const wrap = el('div', 'badgeWrap');
+          const fx = el('div', 'badgeFx');
+          const mk = (cls, a, extra) => {
+            const s = el('span', cls);
+            s.style.setProperty('--a', a + 'deg');
+            if (extra) Object.keys(extra).forEach(k => s.style.setProperty(k, extra[k]));
+            return s;
+          };
+          if (i === 0){
+            const vortex = el('div', 'fxVortex');
+            for (let k = 0; k < 12; k++) vortex.appendChild(mk('fxP', k * 30, {'--d': (k % 4) * 0.04 + 's'}));
+            fx.appendChild(vortex);
+          } else if (i === 1){
+            [0, 90, 180, 270].forEach(a => fx.appendChild(mk('fxStreak', a)));
+          } else {
+            for (let k = 0; k < 8; k++) fx.appendChild(mk('fxSpark', k * 45, {'--i': k}));
+          }
+          wrap.appendChild(badge);
+          wrap.appendChild(fx);
+          row.appendChild(wrap);
+        } else {
+          row.appendChild(badge);
+        }
+        row.appendChild(info);
+        row.appendChild(score);
+        leaderboardList.appendChild(row);
+      });
+    });
+  });
+  document.getElementById('leaderboardPageBack').addEventListener('click', () => leaderboardPage.classList.remove('open'));
   function openAdmin(){ input.value = ''; msg.textContent = ''; modal.classList.add('open'); setTimeout(() => input.focus(), 50); }
   function closeAdmin(){ modal.classList.remove('open'); input.value = ''; msg.textContent = ''; }
   function submitAdmin(){
@@ -3071,7 +3455,7 @@
   }
   landing.addEventListener('click', (e) => {
     if (landing.classList.contains('hidden')) return;
-    if (e.target.closest('#playButton, #landingAvatar, #profileModal')) return;
+    if (e.target.closest('#playButton, #landingAvatar, #profileModal, #leaderboardBubble')) return;
     tapCount++;
     if (tapCount < 10) return;
     tapCount = 0;
