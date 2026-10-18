@@ -1161,110 +1161,121 @@
   .leaderRow.rank3 .leaderName { color: #f0b78a; }
   .leaderRow.rank3 .leaderScoreValue { color: #f0b78a; }
 
-  /* ---- Leaderboard rank badge entrance animations (1st / 2nd / 3rd) ---- */
-  .badgeWrap { position: relative; display: flex; align-items: center; }
-  .badgeFx {
-    --R: 19px;
-    position: absolute; left: 0; top: 50%;
-    width: 36px; height: 36px; margin-top: -18px;
+  /* ===== Radiant Gold Crown Ring / Brushed Silver Ripple / Warm Bronze Orbit - top 3 profile circles ===== */
+  .leaderRow.rank1 .leaderBadge,
+  .leaderRow.rank2 .leaderBadge,
+  .leaderRow.rank3 .leaderBadge { position: relative; isolation: isolate; }
+  .leaderRow.rank1 .leaderBadge::before, .leaderRow.rank1 .leaderBadge::after,
+  .leaderRow.rank2 .leaderBadge::before, .leaderRow.rank2 .leaderBadge::after,
+  .leaderRow.rank3 .leaderBadge::before {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
     pointer-events: none;
   }
-  .leaderRow.rank1 .badgeFx { width: 42px; height: 42px; margin-top: -21px; --R: 21px; }
-  .badgeFx::before, .badgeFx::after { content: ''; position: absolute; inset: 0; border-radius: 50%; opacity: 0; }
+  @keyframes crownSpin { to { rotate: 360deg; } }
 
-  /* 1st: golden vortex -> burst -> gold badge + left-to-right sheen */
-  .leaderRow.rank1 .leaderBadge { animation: goldBadge 1.7s both; }
-  @keyframes goldBadge {
-    0%, 60% { opacity: 0; transform: scale(0.2); }
-    70% { opacity: 1; transform: scale(1.35); filter: brightness(1.8); }
-    85% { opacity: 1; transform: scale(0.95); filter: brightness(1.2); }
-    100% { opacity: 1; transform: scale(1); filter: none; }
+  /* 1st - THE RADIANT GOLD CROWN RING: counter-rotating dual rings, pulsing vertical light beam, drifting gold embers */
+  .leaderRow.rank1 .leaderBadge::before {
+    inset: -8px;
+    background: repeating-conic-gradient(#ffd75e 0deg 10deg, rgba(255,215,94,0) 10deg 14deg);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+    filter: drop-shadow(0 0 4px rgba(255,200,60,0.8));
+    animation: crownSpin 8s linear infinite;
   }
-  .fxVortex {
-    position: absolute; left: 50%; top: 50%; width: 0; height: 0;
-    animation: vortexSpin 1.1s cubic-bezier(0.5, 0, 0.9, 0.6) both;
+  .leaderRow.rank1 .leaderBadge::after {
+    inset: -3px;
+    background: repeating-conic-gradient(#fff0a8 0deg 3deg, rgba(255,240,168,0) 3deg 6deg);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+    filter: drop-shadow(0 0 3px rgba(255,215,94,0.9));
+    animation: crownSpin 4s linear infinite reverse;
   }
-  @keyframes vortexSpin { from { transform: rotate(0deg); } to { transform: rotate(300deg); } }
-  .fxP {
-    position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%;
-    background: #ffe27a; box-shadow: 0 0 6px 2px rgba(255,226,122,0.9);
-    animation: vortexIn 1.1s ease-in both; animation-delay: var(--d);
+  .cwBeam {
+    position: absolute;
+    left: 50%; bottom: calc(100% - 2px);
+    width: 30px; height: 42px; margin-left: -15px;
+    background: linear-gradient(to top, rgba(255,215,100,0.55), rgba(255,215,100,0));
+    -webkit-mask: linear-gradient(to right, transparent, #000 25%, #000 75%, transparent);
+    mask: linear-gradient(to right, transparent, #000 25%, #000 75%, transparent);
+    transform-origin: 50% 100%;
+    pointer-events: none;
+    z-index: -1;
+    animation: beamPulse 2.6s ease-in-out infinite;
   }
-  @keyframes vortexIn {
-    0% { opacity: 0; transform: rotate(var(--a)) translateX(34px) scale(1); }
-    15% { opacity: 1; }
-    85% { opacity: 1; }
-    100% { opacity: 0; transform: rotate(var(--a)) translateX(0) scale(0.3); }
+  @keyframes beamPulse {
+    0%, 100% { opacity: 0.35; transform: scaleY(0.85); }
+    50%      { opacity: 1;    transform: scaleY(1); }
   }
-  .leaderRow.rank1 .badgeFx::before { border: 2px solid #fff0a8; animation: goldBurst 1.7s both; }
-  @keyframes goldBurst {
-    0%, 62% { opacity: 0; transform: scale(1); }
-    66% { opacity: 1; }
-    100% { opacity: 0; transform: scale(2.6); }
-  }
-  .leaderRow.rank1 .badgeFx::after {
-    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.9) 50%, transparent 65%);
-    background-size: 250% 100%; background-repeat: no-repeat; background-position: 100% 0;
-    animation: goldSheen 0.8s ease-in-out 1.75s both;
-  }
-  @keyframes goldSheen {
-    0% { opacity: 1; background-position: 100% 0; }
-    90% { opacity: 1; }
-    100% { opacity: 0; background-position: 0% 0; }
-  }
-
-  /* 2nd: silver streaks snap in from N/E/S/W -> circular outline */
-  .leaderRow.rank2 .leaderBadge { animation: silverBadge 1.1s both; }
-  @keyframes silverBadge {
-    0%, 45% { opacity: 0; transform: scale(0.9); }
-    70%, 100% { opacity: 1; transform: scale(1); }
-  }
-  .fxStreak {
-    position: absolute; left: 50%; top: 50%; width: 14px; height: 2px; margin: -1px 0 0 -7px;
-    border-radius: 2px; background: linear-gradient(90deg, #f2f4f6, transparent);
-    box-shadow: 0 0 6px #c4c9cf;
-    animation: streakIn 0.6s cubic-bezier(0.2, 0.9, 0.1, 1) both;
-  }
-  @keyframes streakIn {
-    0% { opacity: 0; transform: rotate(var(--a)) translateX(42px); }
-    20% { opacity: 1; }
-    70% { opacity: 1; transform: rotate(var(--a)) translateX(24px); }
-    100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--R)) scaleX(0.4); }
-  }
-  .leaderRow.rank2 .badgeFx::before { border: 2px solid #f2f4f6; box-shadow: 0 0 8px rgba(196,201,207,0.7); animation: silverRing 1.1s both; }
-  @keyframes silverRing {
-    0%, 35% { opacity: 0; transform: scale(1.3); }
-    50% { opacity: 1; transform: scale(1); }
-    85% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(1); }
+  .cwEmbers { position: absolute; inset: 0; pointer-events: none; }
+  .cwEmbers span { position: absolute; display: block; opacity: 0; width: 3px; height: 3px; border-radius: 50%; background: #ffe58a; box-shadow: 0 0 5px #ffc933; animation: emberUp 3s ease-out infinite; }
+  .cwEmbers span:nth-child(even) { width: 6px; height: 6px; border-radius: 0; box-shadow: none; background: #fff0a8; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+  .cwEmbers span:nth-child(1) { left: 50%;  top: -14px; animation-delay: 0.0s; }
+  .cwEmbers span:nth-child(2) { left: 95%;  top: 5%;    animation-delay: 0.4s; }
+  .cwEmbers span:nth-child(3) { left: 114%; top: 50%;   animation-delay: 0.9s; }
+  .cwEmbers span:nth-child(4) { left: 95%;  top: 95%;   animation-delay: 1.3s; }
+  .cwEmbers span:nth-child(5) { left: 50%;  top: 114%;  animation-delay: 1.8s; }
+  .cwEmbers span:nth-child(6) { left: 5%;   top: 95%;   animation-delay: 2.2s; }
+  .cwEmbers span:nth-child(7) { left: -14%; top: 50%;   animation-delay: 0.65s; }
+  .cwEmbers span:nth-child(8) { left: 5%;   top: 5%;    animation-delay: 1.55s; }
+  @keyframes emberUp {
+    0%   { opacity: 0;   transform: translate(0, 4px) scale(0.6); }
+    25%  { opacity: 1; }
+    100% { opacity: 0;   transform: translate(3px, -34px) scale(1); }
   }
 
-  /* 3rd: bronze sparks form a circular outline and seal with a quick flash */
-  .leaderRow.rank3 .leaderBadge { animation: bronzeBadge 1.3s both; }
-  @keyframes bronzeBadge {
-    0%, 62% { opacity: 0; transform: scale(0.7); }
-    70% { opacity: 1; transform: scale(1.15); filter: brightness(1.8); }
-    100% { opacity: 1; transform: scale(1); filter: none; }
+  /* 2nd - THE BRUSHED SILVER RIPPLE: metallic ring emitting a periodic expanding ripple, sharp specular sheen sweeping the circumference */
+  .leaderRow.rank2 .leaderBadge::before {
+    inset: -6px;
+    background:
+      repeating-conic-gradient(rgba(255,255,255,0.16) 0deg 1deg, rgba(0,0,0,0) 1deg 3deg),
+      conic-gradient(#9aa0a6, #dfe3e6, #b5bbc1, #eef1f3, #9aa0a6, #d4d9dd, #aab0b6, #e6e9ec, #9aa0a6);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
   }
-  .fxSpark {
-    position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px;
-    border-radius: 50%; background: #f0b78a; box-shadow: 0 0 6px 2px rgba(205,139,85,0.9);
-    animation: sparkIn 0.3s ease-out both, sparkOut 0.2s ease-in 0.85s forwards;
-    animation-delay: calc(var(--i) * 0.06s), 0.85s;
+  .leaderRow.rank2 .leaderBadge::after {
+    inset: -6px;
+    border: 2px solid rgba(220,228,235,0.85);
+    opacity: 0;
+    animation: crownRipple 3s ease-out infinite;
   }
-  @keyframes sparkIn {
-    0% { opacity: 0; transform: rotate(var(--a)) translateX(var(--R)) scale(0); }
-    100% { opacity: 1; transform: rotate(var(--a)) translateX(var(--R)) scale(1); }
+  @keyframes crownRipple {
+    0%   { transform: scale(1);   opacity: 0.9; }
+    80%  { opacity: 0; }
+    100% { transform: scale(1.9); opacity: 0; }
   }
-  @keyframes sparkOut {
-    to { opacity: 0; transform: rotate(var(--a)) translateX(var(--R)) scale(1.6); }
+  .cwSheen {
+    position: absolute; inset: -6px; border-radius: 50%;
+    background: conic-gradient(rgba(255,255,255,0) 0deg 300deg, rgba(255,255,255,0.35) 345deg, #ffffff 355deg, rgba(255,255,255,0) 356deg 360deg);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+    filter: drop-shadow(0 0 3px #ffffff);
+    pointer-events: none;
+    animation: crownSpin 3.6s linear infinite;
   }
-  .leaderRow.rank3 .badgeFx::before { border: 2px solid #ffd2a8; animation: bronzeSeal 1.3s both; }
-  @keyframes bronzeSeal {
-    0%, 60% { opacity: 0; transform: scale(1); box-shadow: none; }
-    66% { opacity: 1; transform: scale(1); box-shadow: 0 0 14px 6px rgba(240,183,138,0.9); }
-    80% { opacity: 1; transform: scale(1.25); box-shadow: 0 0 14px 6px rgba(240,183,138,0.6); }
-    100% { opacity: 0; transform: scale(1.6); box-shadow: none; }
+
+  /* 3rd - THE WARM BRONZE ORBIT: solid bronze/copper ring breathing in thickness, glowing amber dots orbiting along the groove */
+  .leaderRow.rank3 .leaderBadge::before {
+    inset: -6px;
+    border: 3px solid #b87333;
+    box-shadow: 0 0 10px rgba(205,127,50,0.55), inset 0 0 4px rgba(0,0,0,0.4);
+    animation: bronzeBreathe 4s ease-in-out infinite;
+  }
+  @keyframes bronzeBreathe {
+    0%, 100% { border-width: 3px; box-shadow: 0 0 8px rgba(205,127,50,0.45),  inset 0 0 4px rgba(0,0,0,0.4); }
+    50%      { border-width: 5px; box-shadow: 0 0 14px rgba(232,150,70,0.75), inset 0 0 4px rgba(0,0,0,0.4); }
+  }
+  .cwOrbit { position: absolute; inset: -6px; pointer-events: none; }
+  .cwOrbit span { position: absolute; inset: 0; animation: crownSpin 4.8s linear infinite; }
+  .cwOrbit span::before { content: ''; position: absolute; top: -1px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #ffb347; box-shadow: 0 0 6px 2px rgba(255,160,50,0.85); }
+  .cwOrbit span:nth-child(2) { animation-delay: -1.6s; }
+  .cwOrbit span:nth-child(3) { animation-delay: -3.2s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .leaderRow.rank1 .leaderBadge::before, .leaderRow.rank1 .leaderBadge::after,
+    .leaderRow.rank2 .leaderBadge::after, .leaderRow.rank3 .leaderBadge::before,
+    .cwBeam, .cwEmbers span, .cwSheen, .cwOrbit span { animation: none; }
   }
 </style>
 </head>
@@ -3397,6 +3408,16 @@
         if (text !== undefined) n.textContent = text;
         return n;
       };
+      const addCrownFx = (badge, rank) => {
+        const group = (cls, n) => {
+          const c = el('span', cls);
+          for (let k = 0; k < n; k++) c.appendChild(document.createElement('span'));
+          badge.appendChild(c);
+        };
+        if (rank === 1){ badge.appendChild(el('span', 'cwBeam')); group('cwEmbers', 8); }
+        else if (rank === 2) badge.appendChild(el('span', 'cwSheen'));
+        else group('cwOrbit', 3);
+      };
       leaderboardList.innerHTML = '';
       list.forEach((p, i) => {
         const row = el('div', 'leaderRow' + (i < 3 ? ' rank' + (i + 1) : ''));
@@ -3410,30 +3431,8 @@
         score.appendChild(el('div', 'leaderScoreValue', p.w));
         score.appendChild(el('div', 'leaderScoreLabel', 'SCORE'));
         const badge = el('div', 'leaderBadge', i + 1);
-        if (i < 3){
-          const wrap = el('div', 'badgeWrap');
-          const fx = el('div', 'badgeFx');
-          const mk = (cls, a, extra) => {
-            const s = el('span', cls);
-            s.style.setProperty('--a', a + 'deg');
-            if (extra) Object.keys(extra).forEach(k => s.style.setProperty(k, extra[k]));
-            return s;
-          };
-          if (i === 0){
-            const vortex = el('div', 'fxVortex');
-            for (let k = 0; k < 12; k++) vortex.appendChild(mk('fxP', k * 30, {'--d': (k % 4) * 0.04 + 's'}));
-            fx.appendChild(vortex);
-          } else if (i === 1){
-            [0, 90, 180, 270].forEach(a => fx.appendChild(mk('fxStreak', a)));
-          } else {
-            for (let k = 0; k < 8; k++) fx.appendChild(mk('fxSpark', k * 45, {'--i': k}));
-          }
-          wrap.appendChild(badge);
-          wrap.appendChild(fx);
-          row.appendChild(wrap);
-        } else {
-          row.appendChild(badge);
-        }
+        if (i < 3) addCrownFx(badge, i + 1);
+        row.appendChild(badge);
         row.appendChild(info);
         row.appendChild(score);
         leaderboardList.appendChild(row);
