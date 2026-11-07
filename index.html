@@ -3295,12 +3295,6 @@
       settingsMsg.textContent = 'Working...';
       window.dkAdminClear(a[1], ok => {
         btn.disabled = false;
-        if (a[1] === 'usernames' && ok && window.dkLoadUsernameCount){
-          window.dkLoadUsernameCount(n => {
-            settingsMsg.textContent = (n === 0) ? a[3] + ' (0 active usernames remaining)' : a[3];
-          });
-          return;
-        }
         settingsMsg.textContent = ok ? a[3] : 'Failed (check database rules)';
       });
     });
